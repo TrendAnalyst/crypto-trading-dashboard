@@ -72,6 +72,22 @@ async def receive_webhook(request: Request, db: Session = Depends(get_db)):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@router.delete("/api/coins/{symbol}")
+def delete_coin(symbol: str, db: Session = Depends(get_db)):
+    """Löscht einen Coin aus der Datenbank."""
+    
+    coin = db.query(CoinState).filter_by(symbol=symbol).first()
+    
+    if not coin:
+        raise HTTPException(status_code=404, detail=f"Coin {symbol} not found")
+    
+    db.delete(coin)
+    db.commit()
+    
+    logger.info(f"🗑️ Coin gelöscht: {symbol}")
+    return {"status": "success", "message": f"{symbol} deleted"}
+
+
 @router.get("/api/coins")
 def get_coins(db: Session = Depends(get_db)):
     """Liefert alle Coins mit aktuellem Status."""
