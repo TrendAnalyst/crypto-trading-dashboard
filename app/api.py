@@ -72,6 +72,44 @@ async def receive_webhook(request: Request, db: Session = Depends(get_db)):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@router.post("/api/coins/{symbol}/signal")
+async def set_signal(symbol: str, request: Request, db: Session = Depends(get_db)):
+    """
+    Setzt ein Signal mit benutzerdefiniertem Datum.
+    Body: {"type": "buy" oder "sell", "date": "YYYY-MM-DD"}
+    """
+    try:
+        data = await request.json()
+    except:
+        raise HTTPException(status_code=400, detail="Invalid JSON body")
+    
+    coin = db.query(CoinState).filter_by(symbol=symbol).first()
+    if not coin:
+        raise HTTPException(status_code=404, detail=f"Coin {symbol} not found")
+    
+    signal_type = data.get("type", "").lower()
+    if signal_type not in ["buy", "sell"]:
+        raise HTTPException(status_code=400, detail="type must be 'buy' or 'sell'")
+    
+    date_str = data.get("date")
+    if date_str:
+        try:
+            signal_time = datetime.strptime(date_str, "%Y-%m-%d")
+        except ValueError:
+            raise HTTPException(status_code=400, detail="date must be YYYY-MM-DD format")
+    else:
+        signal_time = datetime.utcnow()
+    
+    coin.last_signal_type = signal_type
+    coin.last_signal_time = signal_time
+    coin.last_updated = datetime.utcnow()
+    
+    db.commit()
+    
+    logger.info(f"✅ {symbol} signal set: {signal_type} on {date_str}")
+    return {"status": "success", "message": f"{symbol} signal set to {signal_type} on {date_str}"}
+
+
 @router.delete("/api/coins/{symbol}")
 def delete_coin(symbol: str, db: Session = Depends(get_db)):
     """Löscht einen Coin aus der Datenbank."""
