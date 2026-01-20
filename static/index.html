@@ -3,673 +3,499 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TrendScope</title>
-    <meta name="description" content="Professional cryptocurrency trend analysis">
+    <title>SGNL • Pro</title>
+    <meta name="description" content="Institutional-grade crypto signal intelligence">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <style>
-        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-        
         :root {
-            --bg: #000000;
-            --bg-elevated: #0a0a0a;
-            --bg-hover: #111111;
-            --border: rgba(255, 255, 255, 0.06);
-            --border-hover: rgba(255, 255, 255, 0.1);
-            --text-primary: #ffffff;
-            --text-secondary: rgba(255, 255, 255, 0.5);
-            --text-tertiary: rgba(255, 255, 255, 0.3);
-            --accent: #0a84ff;
-            --green: #30d158;
-            --red: #ff453a;
-            --radius: 12px;
-            --radius-sm: 8px;
+            --bg-body: #000000;
+            --bg-surface: #0A0A0A;
+            --bg-surface-hover: #121212;
+            --border-subtle: rgba(255, 255, 255, 0.08);
+            --border-focus: rgba(255, 255, 255, 0.16);
+            
+            --text-primary: #EDEDED;
+            --text-secondary: #888888;
+            --text-tertiary: #444444;
+            
+            --accent-primary: #FFFFFF;
+            --semantic-green: #27D669; /* Vivid, OLED-optimized green */
+            --semantic-red: #FF3B30;   /* SF System Red */
+            --semantic-green-dim: rgba(39, 214, 105, 0.1);
+            --semantic-red-dim: rgba(255, 59, 48, 0.1);
+            
+            --font-sans: 'Inter', -apple-system, sans-serif;
+            --font-mono: 'JetBrains Mono', monospace;
+            
+            --ease-apple: cubic-bezier(0.2, 0.8, 0.2, 1);
         }
+
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-font-smoothing: antialiased; }
         
         body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-            background: var(--bg);
+            background-color: var(--bg-body);
             color: var(--text-primary);
-            line-height: 1.5;
-            -webkit-font-smoothing: antialiased;
-            -moz-osx-font-smoothing: grayscale;
+            font-family: var(--font-sans);
+            font-size: 13px;
+            letter-spacing: -0.01em;
+            overflow-y: scroll;
         }
-        
-        /* Layout */
-        .container {
-            max-width: 1200px;
+
+        /* Utilities */
+        .mono { font-family: var(--font-mono); letter-spacing: -0.02em; }
+        .fade-in { animation: fadeIn 0.6s var(--ease-apple) forwards; opacity: 0; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Structure */
+        .app-shell {
+            max-width: 1000px;
             margin: 0 auto;
-            padding: 0 24px;
+            padding: 40px 24px 80px;
         }
-        
+
         /* Header */
-        header {
-            position: sticky;
-            top: 0;
-            z-index: 100;
-            background: rgba(0, 0, 0, 0.8);
-            backdrop-filter: saturate(180%) blur(20px);
-            -webkit-backdrop-filter: saturate(180%) blur(20px);
-            border-bottom: 1px solid var(--border);
-        }
-        
-        .header-inner {
+        .workspace-header {
             display: flex;
-            align-items: center;
             justify-content: space-between;
-            height: 64px;
+            align-items: flex-end;
+            margin-bottom: 48px;
+            border-bottom: 1px solid var(--border-subtle);
+            padding-bottom: 24px;
         }
-        
-        .logo {
+
+        .brand-lockup h1 {
+            font-size: 15px;
+            font-weight: 600;
+            letter-spacing: -0.02em;
+            color: var(--text-primary);
             display: flex;
             align-items: center;
             gap: 12px;
         }
         
-        .logo-icon {
+        .brand-indicator {
+            width: 6px;
+            height: 6px;
+            background: var(--semantic-green);
+            border-radius: 50%;
+            box-shadow: 0 0 12px var(--semantic-green);
+        }
+
+        .brand-subtitle {
+            margin-top: 6px;
+            color: var(--text-secondary);
+            font-size: 13px;
+        }
+
+        .controls-cluster {
+            display: flex;
+            gap: 24px;
+            align-items: center;
+        }
+
+        /* Filter Tabs */
+        .filter-group {
+            display: flex;
+            background: var(--bg-surface);
+            padding: 3px;
+            border-radius: 10px;
+            border: 1px solid var(--border-subtle);
+        }
+
+        .filter-item {
+            appearance: none;
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            font-family: var(--font-sans);
+            font-size: 12px;
+            font-weight: 500;
+            padding: 6px 16px;
+            border-radius: 7px;
+            cursor: pointer;
+            transition: all 0.2s var(--ease-apple);
+        }
+
+        .filter-item:hover { color: var(--text-primary); }
+        .filter-item.active {
+            background: var(--bg-surface-hover);
+            color: var(--text-primary);
+            box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+        }
+
+        /* Data Grid */
+        .data-grid {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+        }
+
+        .data-grid th {
+            text-align: left;
+            font-size: 11px;
+            color: var(--text-tertiary);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            font-weight: 600;
+            padding: 0 0 16px 0;
+            cursor: default;
+        }
+
+        .data-grid th.sortable { cursor: pointer; transition: color 0.2s; }
+        .data-grid th.sortable:hover { color: var(--text-secondary); }
+        .data-grid th.text-right { text-align: right; }
+        .data-grid th.text-center { text-align: center; }
+
+        .row-item td {
+            padding: 18px 0;
+            border-bottom: 1px solid var(--border-subtle);
+            vertical-align: middle;
+            transition: background 0.1s;
+        }
+
+        .row-item:last-child td { border-bottom: none; }
+        .row-item:hover td { background: linear-gradient(90deg, transparent, rgba(255,255,255,0.01) 50%, transparent); }
+
+        /* Asset Cell */
+        .asset-cell {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .asset-monogram {
             width: 32px;
             height: 32px;
-            background: linear-gradient(135deg, #0a84ff, #5e5ce6);
+            background: var(--bg-surface);
+            border: 1px solid var(--border-subtle);
             border-radius: 8px;
             display: flex;
             align-items: center;
             justify-content: center;
-        }
-        
-        .logo-icon svg {
-            width: 18px;
-            height: 18px;
-            color: white;
-        }
-        
-        .logo-text {
-            font-size: 17px;
             font-weight: 600;
-            letter-spacing: -0.02em;
-        }
-        
-        .header-right {
-            display: flex;
-            align-items: center;
-            gap: 16px;
-        }
-        
-        /* Pill buttons */
-        .pill-group {
-            display: flex;
-            background: var(--bg-elevated);
-            border-radius: 10px;
-            padding: 3px;
-            border: 1px solid var(--border);
-        }
-        
-        .pill-btn {
-            padding: 6px 14px;
-            font-size: 13px;
-            font-weight: 500;
+            font-size: 11px;
             color: var(--text-secondary);
-            background: transparent;
-            border: none;
-            border-radius: 7px;
-            cursor: pointer;
-            transition: all 0.15s ease;
         }
-        
-        .pill-btn:hover {
-            color: var(--text-primary);
-        }
-        
-        .pill-btn.active {
-            background: rgba(255, 255, 255, 0.1);
-            color: var(--text-primary);
-        }
-        
-        /* Status badge */
-        .status {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            padding: 6px 12px;
-            background: var(--bg-elevated);
-            border: 1px solid var(--border);
-            border-radius: 20px;
-            font-size: 13px;
-        }
-        
-        .status-dot {
-            width: 6px;
-            height: 6px;
-            background: var(--green);
-            border-radius: 50%;
-            animation: pulse 2s infinite;
-        }
-        
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
-        }
-        
-        .status-count {
-            font-weight: 600;
-            color: var(--text-primary);
-        }
-        
-        .status-label {
-            color: var(--text-tertiary);
-        }
-        
-        /* Main content */
-        main {
-            padding: 32px 0 100px;
-        }
-        
-        /* Loading */
-        #loading {
+
+        .asset-info { display: flex; flex-direction: column; gap: 2px; }
+        .asset-symbol { font-weight: 600; color: var(--text-primary); font-size: 13px; }
+        .asset-name { color: var(--text-tertiary); font-size: 11px; }
+
+        /* Score Cell */
+        .score-visual {
             display: flex;
             flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 120px 0;
+            gap: 6px;
+            width: 100%;
+            max-width: 80px;
+            margin: 0 auto;
+        }
+
+        .score-number {
+             text-align: right;
+             font-size: 12px;
+             font-weight: 600;
+             font-variant-numeric: tabular-nums;
+        }
+        .score-number.pos { color: var(--semantic-green); }
+        .score-number.neg { color: var(--semantic-red); }
+        .score-number.neu { color: var(--text-tertiary); }
+
+        .score-track {
+            height: 2px;
+            background: var(--bg-surface-hover);
+            border-radius: 1px;
+            width: 100%;
+            overflow: hidden;
+            display: flex;
         }
         
-        .spinner {
-            width: 32px;
-            height: 32px;
-            border: 2px solid var(--border);
-            border-top-color: var(--accent);
-            border-radius: 50%;
-            animation: spin 0.8s linear infinite;
+        /* Flex based signal bar logic */
+        /* Center pivot */
+        .score-track::after { 
+            content: ''; width: 1px; height: 100%; background: var(--bg-body); 
+            position: absolute; left: 50%; transform: translateX(-50%);
         }
+
+        .score-bar { height: 100%; transition: width 0.4s var(--ease-apple); }
+        .score-bar.pos { background: var(--semantic-green); margin-left: auto; } /* Right aligned for pos? No, requires different logic. Using simpler absolute bar for MVP cleanliness. */
         
-        @keyframes spin {
-            to { transform: rotate(360deg); }
+        /* Simpler Visual Bar */
+        .visual-bar-wrap {
+            position: relative; height: 2px; background: var(--bg-surface); width: 100%; border-radius: 2px;
         }
-        
-        #loading p {
-            margin-top: 16px;
-            color: var(--text-tertiary);
-            font-size: 14px;
+        .visual-bar-fill {
+            position: absolute; height: 100%; top: 0;
+            transition: all 0.5s var(--ease-apple);
         }
-        
-        /* Error */
-        #error {
-            text-align: center;
-            padding: 120px 24px;
-        }
-        
-        #error h3 {
-            font-size: 17px;
-            font-weight: 600;
-            margin-bottom: 8px;
-        }
-        
-        #error p {
-            color: var(--text-secondary);
-            font-size: 14px;
-            margin-bottom: 24px;
-        }
-        
-        .btn-primary {
+        /* If positive: left: 50%, width: X%. If negative: right: 50%, width: X% */
+
+        /* Trend Pills */
+        .ui-trend {
             display: inline-flex;
             align-items: center;
-            padding: 10px 20px;
-            background: var(--accent);
-            color: white;
-            font-size: 14px;
-            font-weight: 500;
-            border: none;
-            border-radius: var(--radius);
-            cursor: pointer;
-            transition: opacity 0.15s;
-        }
-        
-        .btn-primary:hover {
-            opacity: 0.9;
-        }
-        
-        /* Table */
-        .table-container {
-            background: var(--bg-elevated);
-            border: 1px solid var(--border);
-            border-radius: var(--radius);
-            overflow: hidden;
-        }
-        
-        table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-        
-        thead {
-            background: rgba(255, 255, 255, 0.02);
-        }
-        
-        th {
-            padding: 12px 20px;
+            justify-content: center;
+            height: 24px;
+            padding: 0 10px;
+            border-radius: 6px;
             font-size: 11px;
             font-weight: 500;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
+            letter-spacing: 0.01em;
+            background: var(--bg-surface);
             color: var(--text-tertiary);
-            text-align: left;
-            border-bottom: 1px solid var(--border);
+            border: 1px solid transparent;
+        }
+
+        .ui-trend.up {
+            background: var(--semantic-green-dim);
+            color: var(--semantic-green);
+            border-color: rgba(39, 214, 105, 0.15);
         }
         
-        th.center { text-align: center; }
-        th.right { text-align: right; }
-        
-        tbody tr {
-            border-bottom: 1px solid var(--border);
-            transition: background 0.15s ease;
+        .ui-trend.down {
+            background: var(--semantic-red-dim);
+            color: var(--semantic-red);
+            border-color: rgba(255, 59, 48, 0.15);
         }
-        
-        tbody tr:last-child {
-            border-bottom: none;
-        }
-        
-        tbody tr:hover {
-            background: var(--bg-hover);
-        }
-        
-        td {
-            padding: 16px 20px;
-            font-size: 14px;
-            vertical-align: middle;
-        }
-        
-        td.center { text-align: center; }
-        td.right { text-align: right; }
-        
-        /* Asset cell */
-        .asset {
-            display: flex;
-            align-items: center;
-            gap: 14px;
-        }
-        
-        .asset-icon {
-            width: 40px;
-            height: 40px;
-            border-radius: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 13px;
-            font-weight: 600;
-            color: white;
-            transition: transform 0.2s ease;
-        }
-        
-        tbody tr:hover .asset-icon {
-            transform: scale(1.05);
-        }
-        
-        .asset-name {
-            font-weight: 600;
-            color: var(--text-primary);
-            margin-bottom: 2px;
-        }
-        
-        .asset-symbol {
-            font-size: 12px;
-            color: var(--text-tertiary);
-            font-family: 'SF Mono', 'Menlo', monospace;
-        }
-        
-        /* Score */
-        .score {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 6px;
-        }
-        
-        .score-value {
-            font-size: 16px;
-            font-weight: 600;
-            font-variant-numeric: tabular-nums;
-        }
-        
-        .score-value.positive { color: var(--green); }
-        .score-value.negative { color: var(--red); }
-        .score-value.neutral { color: var(--text-tertiary); }
-        
-        .score-bar {
-            width: 60px;
-            height: 3px;
-            background: rgba(255, 255, 255, 0.06);
-            border-radius: 2px;
-            overflow: hidden;
-        }
-        
-        .score-fill {
-            height: 100%;
-            border-radius: 2px;
-            transition: width 0.3s ease;
-        }
-        
-        .score-fill.positive { background: var(--green); }
-        .score-fill.negative { background: var(--red); }
-        
-        /* Trend indicator */
-        .trend {
+
+        /* Signal Tag */
+        .ui-signal {
             display: inline-flex;
             align-items: center;
-            justify-content: center;
-            width: 32px;
-            height: 32px;
-            border-radius: var(--radius-sm);
-            transition: transform 0.15s ease;
+            gap: 8px;
+            font-family: var(--font-mono);
+            font-size: 11px;
+            color: var(--text-secondary);
         }
-        
-        tbody tr:hover .trend {
-            transform: scale(1.1);
+
+        .signal-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 1px; /* Square dot - "Pixel" aesthetic currently trendy */
+            background: var(--text-tertiary);
         }
+        .ui-signal.buy .signal-dot { background: var(--semantic-green); box-shadow: 0 0 8px var(--semantic-green-dim); }
+        .ui-signal.sell .signal-dot { background: var(--semantic-red); box-shadow: 0 0 8px var(--semantic-red-dim); }
         
-        .trend.up {
-            background: rgba(48, 209, 88, 0.12);
-            color: var(--green);
-        }
-        
-        .trend.down {
-            background: rgba(255, 69, 58, 0.12);
-            color: var(--red);
-        }
-        
-        .trend.neutral {
-            background: rgba(255, 255, 255, 0.04);
-            color: var(--text-tertiary);
-        }
-        
-        .trend svg {
-            width: 14px;
-            height: 14px;
-        }
-        
-        /* Signal */
-        .signal {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            padding: 6px 10px;
-            border-radius: 6px;
-            font-size: 12px;
-            font-weight: 500;
-            transition: transform 0.15s ease;
-        }
-        
-        .signal:hover {
-            transform: translateY(-1px);
-        }
-        
-        .signal.buy {
-            background: rgba(48, 209, 88, 0.12);
-            color: var(--green);
-        }
-        
-        .signal.sell {
-            background: rgba(255, 69, 58, 0.12);
-            color: var(--red);
-        }
-        
-        .signal-time {
-            color: var(--text-tertiary);
-            font-weight: 400;
-        }
-        
-        .no-signal {
-            color: var(--text-tertiary);
-            font-size: 13px;
-        }
-        
-        /* Updated time */
-        .updated {
-            font-size: 13px;
-            color: var(--text-tertiary);
-        }
-        
+        .signal-ago { color: var(--text-tertiary); margin-left: 6px; font-size: 10px; }
+
         /* Footer */
-        .footer {
-            margin-top: 24px;
+        .system-status {
+            margin-top: 60px;
             display: flex;
-            align-items: center;
             justify-content: space-between;
-            font-size: 12px;
             color: var(--text-tertiary);
+            font-size: 11px;
+            border-top: 1px solid var(--border-subtle);
+            padding-top: 24px;
         }
-        
-        .footer-legend {
-            display: flex;
-            align-items: center;
-            gap: 16px;
-        }
-        
-        .footer-legend span {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-        
-        .legend-dot {
-            width: 8px;
-            height: 8px;
-            border-radius: 2px;
-        }
-        
-        .legend-dot.up { background: var(--green); }
-        .legend-dot.down { background: var(--red); }
-        
-        /* Responsive */
-        @media (max-width: 768px) {
-            .container { padding: 0 16px; }
-            .header-inner { height: 56px; }
-            .pill-group { display: none; }
-            th, td { padding: 12px 14px; }
-            .asset-icon { width: 36px; height: 36px; font-size: 12px; }
-        }
-        
-        /* Hidden class */
-        .hidden { display: none !important; }
+
+        /* Loading / States */
+        .state-empty { padding: 80px 0; text-align: center; color: var(--text-secondary); }
+        .spin { animation: rotation 1s infinite linear; }
+        @keyframes rotation { from { transform: rotate(0deg); } to { transform: rotate(359deg); } }
+
     </style>
 </head>
 <body>
-    <header>
-        <div class="container">
-            <div class="header-inner">
-                <div class="logo">
-                    <div class="logo-icon">
-                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
-                        </svg>
-                    </div>
-                    <span class="logo-text">TrendScope</span>
-                </div>
-                
-                <div class="header-right">
-                    <div class="pill-group">
-                        <button class="pill-btn active" id="sort-bullish" onclick="sortCoins('score', 'desc')">Bullish</button>
-                        <button class="pill-btn" id="sort-bearish" onclick="sortCoins('score', 'asc')">Bearish</button>
-                        <button class="pill-btn" id="sort-name" onclick="sortCoins('name', 'asc')">A–Z</button>
-                    </div>
-                    
-                    <div class="status">
-                        <div class="status-dot"></div>
-                        <span class="status-count" id="coin-count">0</span>
-                        <span class="status-label">assets</span>
-                    </div>
+
+    <div class="app-shell">
+        
+        <header class="workspace-header">
+            <div class="brand-lockup">
+                <h1><div class="brand-indicator"></div> SGNL</h1>
+                <div class="brand-subtitle">Pro.v1 // Institutional Feeds</div>
+            </div>
+
+            <div class="controls-cluster">
+                <div class="filter-group">
+                    <button class="filter-item active" onclick="setSort('score', 'desc', this)">Strongest</button>
+                    <button class="filter-item" onclick="setSort('score', 'asc', this)">Weakest</button>
+                    <button class="filter-item" onclick="setSort('name', 'asc', this)">Index</button>
                 </div>
             </div>
-        </div>
-    </header>
-    
-    <main>
-        <div class="container">
-            <div id="loading">
-                <div class="spinner"></div>
-                <p>Loading</p>
+        </header>
+
+        <main>
+            <div id="loading" class="state-empty">
+                <svg class="spin" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
+                </svg>
             </div>
-            
-            <div id="error" class="hidden">
-                <h3>Unable to connect</h3>
-                <p>Please check your connection and try again.</p>
-                <button class="btn-primary" onclick="fetchCoins()">Retry</button>
+
+            <div id="content" class="fade-in" style="display: none;">
+                <table class="data-grid">
+                    <thead>
+                        <tr>
+                            <th style="width: 25%">Instrument</th>
+                            <th style="width: 15%" class="text-center">Trend Score</th>
+                            <th style="width: 10%" class="text-center">1W</th>
+                            <th style="width: 10%" class="text-center">3D</th>
+                            <th style="width: 10%" class="text-center">1D</th>
+                            <th style="width: 20%">Latest Signal</th>
+                            <th style="width: 10%" class="text-right">Upd.</th>
+                        </tr>
+                    </thead>
+                    <tbody id="table-body">
+                        <!-- Rows injected via JS -->
+                    </tbody>
+                </table>
             </div>
-            
-            <div id="table-container" class="hidden">
-                <div class="table-container">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Asset</th>
-                                <th class="center" style="width:100px">Score</th>
-                                <th class="center" style="width:70px">1W</th>
-                                <th class="center" style="width:70px">3D</th>
-                                <th class="center" style="width:70px">1D</th>
-                                <th style="width:140px">Signal</th>
-                                <th class="right" style="width:90px">Updated</th>
-                            </tr>
-                        </thead>
-                        <tbody id="coins-table"></tbody>
-                    </table>
-                </div>
-                
-                <div class="footer">
-                    <div class="footer-legend">
-                        <span><div class="legend-dot up"></div>Uptrend</span>
-                        <span><div class="legend-dot down"></div>Downtrend</span>
-                        <span style="color: var(--text-tertiary)">Score: 1W ±6 · 3D ±3 · 1D ±1</span>
-                    </div>
-                    <div>
-                        Updated <span id="last-update">—</span>
-                    </div>
-                </div>
+
+            <div class="system-status">
+                <div class="mono">SYNC_ID: <span id="sync-id">--</span></div>
+                <div>SECURE CONNECTION • <span id="item-count">0</span> STREAMS ACTIVE</div>
             </div>
-        </div>
-    </main>
+        </main>
+
+    </div>
 
     <script>
-        const REFRESH = 30000;
-        let coins = [];
-        let sort = { field: 'score', dir: 'desc' };
-
-        const COLORS = {
-            HYPE: 'linear-gradient(135deg, #8b5cf6, #a855f7)',
-            VIRTUAL: 'linear-gradient(135deg, #06b6d4, #0ea5e9)',
-            FARTCOIN: 'linear-gradient(135deg, #f59e0b, #f97316)',
-            PEPE: 'linear-gradient(135deg, #22c55e, #16a34a)',
-            DOGE: 'linear-gradient(135deg, #eab308, #f59e0b)',
-            BTC: 'linear-gradient(135deg, #f97316, #ea580c)',
-            ETH: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
-            SOL: 'linear-gradient(135deg, #9333ea, #c026d3)',
-            DEFAULT: 'linear-gradient(135deg, #374151, #4b5563)'
+        // State
+        let store = {
+            data: [],
+            sort: { field: 'score', dir: 'desc' }
         };
 
+        const REFRESH_Rate = 30000;
+
+        // Logic
         function calcScore(t) {
             let s = 0;
+            // 10-point scale for cleaner math
             if (t['1w'] === 'uptrend') s += 6; else if (t['1w'] === 'downtrend') s -= 6;
             if (t['3d'] === 'uptrend') s += 3; else if (t['3d'] === 'downtrend') s -= 3;
             if (t['1d'] === 'uptrend') s += 1; else if (t['1d'] === 'downtrend') s -= 1;
             return s;
         }
 
-        function sortCoins(field, dir) {
-            sort = { field, dir };
-            document.querySelectorAll('.pill-btn').forEach(b => b.classList.remove('active'));
-            document.getElementById(field === 'score' ? (dir === 'desc' ? 'sort-bullish' : 'sort-bearish') : 'sort-name')?.classList.add('active');
-            render();
+        async function init() {
+            await load();
+            setInterval(load, REFRESH_Rate);
+            document.addEventListener('visibilitychange', () => {
+                if(document.visibilityState === 'visible') load();
+            });
         }
 
-        async function fetchCoins() {
+        async function load() {
             try {
-                const res = await fetch('/api/coins');
-                if (!res.ok) throw new Error();
-                const data = await res.json();
-                coins = data.coins.map(c => ({ ...c, score: calcScore(c.trends) }));
-                document.getElementById('coin-count').textContent = data.total_coins;
-                document.getElementById('loading').classList.add('hidden');
-                document.getElementById('error').classList.add('hidden');
-                document.getElementById('table-container').classList.remove('hidden');
-                document.getElementById('last-update').textContent = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+                const req = await fetch('/api/coins');
+                const res = await req.json();
+                
+                store.data = res.coins.map(c => ({
+                    ...c,
+                    score: calcScore(c.trends)
+                }));
+                
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('content').style.display = 'block';
+                document.getElementById('item-count').innerText = res.total_coins;
+                document.getElementById('sync-id').innerText = Math.floor(Date.now() / 1000).toString(16).toUpperCase();
+                
                 render();
-            } catch (e) {
-                document.getElementById('loading').classList.add('hidden');
-                document.getElementById('error').classList.remove('hidden');
+            } catch(e) {
+                console.error(e);
             }
         }
 
         function render() {
-            const sorted = [...coins].sort((a, b) => {
-                if (sort.field === 'score') return sort.dir === 'desc' ? b.score - a.score : a.score - b.score;
+            const tbody = document.getElementById('table-body');
+            
+            // Sort
+            const sorted = [...store.data].sort((a,b) => {
+                if (store.sort.field === 'score') {
+                    return store.sort.dir === 'desc' ? b.score - a.score : a.score - b.score;
+                }
                 return a.display_name.localeCompare(b.display_name);
             });
 
-            const tbody = document.getElementById('coins-table');
-            const existing = {};
-            tbody.querySelectorAll('tr').forEach(r => existing[r.id] = r);
-
-            sorted.forEach(c => {
-                const id = `r-${c.symbol.replace(/\./g, '')}`;
-                let row = existing[id];
-                if (!row) { row = document.createElement('tr'); row.id = id; tbody.appendChild(row); }
-
-                const pct = Math.min(100, (Math.abs(c.score) / 10) * 100);
-                const cls = c.score > 0 ? 'positive' : c.score < 0 ? 'negative' : 'neutral';
-                const bg = COLORS[c.display_name] || COLORS.DEFAULT;
-
-                row.innerHTML = `
+            // Diffing - brute force replace is fine for <100 items for simplicity & stability
+            tbody.innerHTML = sorted.map(row => {
+                const scoreRes = getScoreVisuals(row.score);
+                const signalRes = getSignalVisuals(row.last_signal);
+                
+                return `
+                <tr class="row-item">
                     <td>
-                        <div class="asset">
-                            <div class="asset-icon" style="background:${bg}">${c.display_name.slice(0,2)}</div>
-                            <div>
-                                <div class="asset-name">${c.display_name}</div>
-                                <div class="asset-symbol">${c.symbol}</div>
+                        <div class="asset-cell">
+                            <div class="asset-monogram mono">${row.display_name.substring(0,3).toUpperCase()}</div>
+                            <div class="asset-info">
+                                <span class="asset-symbol">${row.display_name}</span>
+                                <span class="asset-name mono">${row.symbol}</span>
                             </div>
                         </div>
                     </td>
-                    <td class="center">
-                        <div class="score">
-                            <span class="score-value ${cls}">${c.score > 0 ? '+' : ''}${c.score}</span>
-                            <div class="score-bar"><div class="score-fill ${cls}" style="width:${pct}%"></div></div>
+                    <td>
+                        <div class="score-visual">
+                            <div class="visual-bar-wrap">
+                                <div class="visual-bar-fill ${scoreRes.cls}" style="${scoreRes.style}"></div>
+                            </div>
+                            <div class="score-number ${scoreRes.textCls}">${scoreRes.prefix}${row.score}</div>
                         </div>
                     </td>
-                    <td class="center">${trend(c.trends['1w'])}</td>
-                    <td class="center">${trend(c.trends['3d'])}</td>
-                    <td class="center">${trend(c.trends['1d'])}</td>
-                    <td>${signal(c.last_signal)}</td>
-                    <td class="right"><span class="updated">${time(c.last_updated_minutes_ago)}</span></td>
+                    <td class="text-center">${getTrendPill(row.trends['1w'])}</td>
+                    <td class="text-center">${getTrendPill(row.trends['3d'])}</td>
+                    <td class="text-center">${getTrendPill(row.trends['1d'])}</td>
+                    <td>${signalRes}</td>
+                    <td class="text-right mono" style="color: var(--text-tertiary); font-size: 11px;">
+                        ${formatTime(row.last_updated_minutes_ago)}
+                    </td>
+                </tr>
                 `;
-                tbody.appendChild(row);
-            });
-
-            const ids = new Set(sorted.map(c => `r-${c.symbol.replace(/\./g, '')}`));
-            Object.keys(existing).forEach(id => { if (!ids.has(id)) existing[id].remove(); });
+            }).join('');
         }
 
-        function trend(t) {
-            if (!t) return '<div class="trend neutral">–</div>';
-            if (t === 'uptrend') return '<div class="trend up"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 15l7-7 7 7"/></svg></div>';
-            return '<div class="trend down"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/></svg></div>';
+        // Visual Helpers
+        function getScoreVisuals(score) {
+            const max = 10;
+            const pct = Math.min((Math.abs(score) / max) * 100, 100);
+            
+            if (score > 0) {
+                return { cls: 'pos', textCls: 'pos', style: `left: 50%; width: ${pct/2}%`, prefix: '+' };
+            } else if (score < 0) {
+                return { cls: 'neg', textCls: 'neg', style: `right: 50%; width: ${pct/2}%`, prefix: '' };
+            }
+            return { cls: '', textCls: 'neu', style: 'width: 0', prefix: '' };
         }
 
-        function signal(s) {
-            if (!s?.type) return '<span class="no-signal">—</span>';
-            const buy = s.type === 'buy';
-            return `<div class="signal ${buy ? 'buy' : 'sell'}">${buy ? 'Buy' : 'Sell'}<span class="signal-time">${time(s.minutes_ago)}</span></div>`;
+        function getTrendPill(status) {
+            if (status === 'uptrend') return `<span class="ui-trend up">BULL</span>`;
+            if (status === 'downtrend') return `<span class="ui-trend down">BEAR</span>`;
+            return `<span class="ui-trend mono">-</span>`;
         }
 
-        function time(m) {
-            if (m == null) return '—';
-            if (m < 1) return 'now';
-            if (m < 60) return m + 'm';
-            const h = Math.floor(m / 60);
-            if (h < 24) return h + 'h';
-            return Math.floor(h / 24) + 'd';
+        function getSignalVisuals(sig) {
+            if (!sig || !sig.type) return `<div class="ui-signal"><div class="signal-dot" style="background: var(--bg-surface-hover)"></div><span style="opacity:0.3">NO SIGNAL</span></div>`;
+            return `
+                <div class="ui-signal ${sig.type}">
+                    <div class="signal-dot"></div>
+                    <span>${sig.type.toUpperCase()}</span>
+                    <span class="signal-ago">${formatTime(sig.minutes_ago)}</span>
+                </div>
+            `;
+        }
+        
+        function formatTime(m) {
+            if (m === null) return '--';
+            if (m < 1) return 'NOW';
+            if (m < 60) return `${m}M`;
+            const h = Math.floor(m/60);
+            if (h < 24) return `${h}H`;
+            return `${Math.floor(h/24)}D`;
         }
 
-        fetchCoins();
-        setInterval(fetchCoins, REFRESH);
-        document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') fetchCoins(); });
+        function setSort(field, dir, el) {
+            store.sort = { field, dir };
+            document.querySelectorAll('.filter-item').forEach(b => b.classList.remove('active'));
+            el.classList.add('active');
+            render();
+        }
+
+        // Boot
+        init();
+
     </script>
 </body>
 </html>
