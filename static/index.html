@@ -4,10 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Crypto Trading Dashboard</title>
-    <meta name="description" content="Real-time cryptocurrency trading signals dashboard with TradingView integration">
+    <meta name="description" content="Real-time cryptocurrency trading signals dashboard">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -16,219 +16,274 @@
                 extend: {
                     fontFamily: { sans: ['Inter', 'system-ui', 'sans-serif'] },
                     colors: {
-                        gray: {
-                            950: '#07070a', 900: '#0c0c12', 850: '#111118',
-                            800: '#18181f', 750: '#1e1e27', 700: '#26262f'
-                        }
-                    },
-                    animation: {
-                        'glow': 'glow 2s ease-in-out infinite',
-                        'float': 'float 6s ease-in-out infinite',
-                        'shimmer': 'shimmer 2s infinite'
+                        gray: { 950: '#07070a', 900: '#0c0c12', 850: '#111118', 800: '#18181f', 750: '#1e1e27', 700: '#26262f' }
                     }
                 }
             }
         }
     </script>
     <style>
-        @keyframes glow {
-            0%, 100% { box-shadow: 0 0 15px rgba(59, 130, 246, 0.15), 0 0 30px rgba(59, 130, 246, 0.1), inset 0 0 20px rgba(59, 130, 246, 0.05); }
-            50% { box-shadow: 0 0 25px rgba(59, 130, 246, 0.25), 0 0 50px rgba(59, 130, 246, 0.15), inset 0 0 30px rgba(59, 130, 246, 0.08); }
-        }
-        @keyframes float { 0%, 100% { transform: translateY(0px); } 50% { transform: translateY(-10px); } }
-        @keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
-        @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px) scale(0.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
-        @keyframes pulse-ring { 0% { transform: scale(0.8); opacity: 1; } 100% { transform: scale(2); opacity: 0; } }
-        @keyframes gradient-shift { 0%, 100% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } }
-        
-        .glass { background: linear-gradient(135deg, rgba(18, 18, 26, 0.9) 0%, rgba(12, 12, 18, 0.95) 100%); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); }
-        .glass-subtle { background: rgba(18, 18, 26, 0.6); backdrop-filter: blur(10px); }
-        .coin-card { animation: fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards; opacity: 0; position: relative; overflow: hidden; }
-        .coin-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px; background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.1) 50%, transparent 100%); }
-        .coin-card:hover { transform: translateY(-4px); box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(255, 255, 255, 0.05); }
-        .recent-update { animation: glow 2s ease-in-out infinite, fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards; border-color: rgba(59, 130, 246, 0.4) !important; }
-        .gradient-text { background: linear-gradient(135deg, #60a5fa 0%, #818cf8 50%, #c084fc 100%); background-size: 200% auto; animation: gradient-shift 4s ease infinite; -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
-        .trend-badge { position: relative; overflow: hidden; transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
-        .trend-badge:hover { transform: scale(1.02); }
-        .trend-up { background: linear-gradient(135deg, rgba(34, 197, 94, 0.12) 0%, rgba(34, 197, 94, 0.05) 100%); border: 1px solid rgba(34, 197, 94, 0.25); }
-        .trend-up::before { content: ''; position: absolute; top: 0; left: -100%; width: 100%; height: 100%; background: linear-gradient(90deg, transparent, rgba(34, 197, 94, 0.1), transparent); animation: shimmer 3s infinite; }
-        .trend-down { background: linear-gradient(135deg, rgba(239, 68, 68, 0.12) 0%, rgba(239, 68, 68, 0.05) 100%); border: 1px solid rgba(239, 68, 68, 0.25); }
-        .trend-neutral { background: rgba(75, 85, 99, 0.15); border: 1px solid rgba(75, 85, 99, 0.2); }
-        .signal-buy { background: linear-gradient(135deg, rgba(34, 197, 94, 0.15) 0%, rgba(34, 197, 94, 0.08) 100%); border: 1px solid rgba(34, 197, 94, 0.3); position: relative; }
-        .signal-buy::after { content: ''; position: absolute; inset: 0; border-radius: inherit; background: radial-gradient(circle at 30% 30%, rgba(34, 197, 94, 0.15), transparent 50%); }
-        .signal-sell { background: linear-gradient(135deg, rgba(239, 68, 68, 0.15) 0%, rgba(239, 68, 68, 0.08) 100%); border: 1px solid rgba(239, 68, 68, 0.3); position: relative; }
-        .signal-sell::after { content: ''; position: absolute; inset: 0; border-radius: inherit; background: radial-gradient(circle at 30% 30%, rgba(239, 68, 68, 0.15), transparent 50%); }
-        .live-dot { position: relative; }
-        .live-dot::before { content: ''; position: absolute; inset: -3px; border-radius: 50%; background: rgba(34, 197, 94, 0.4); animation: pulse-ring 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
-        .coin-icon { width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; border-radius: 12px; font-weight: 700; font-size: 14px; background: linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(139, 92, 246, 0.1)); border: 1px solid rgba(139, 92, 246, 0.2); color: #a78bfa; }
-        ::-webkit-scrollbar { width: 8px; height: 8px; }
-        ::-webkit-scrollbar-track { background: rgba(0, 0, 0, 0.1); }
-        ::-webkit-scrollbar-thumb { background: rgba(99, 102, 241, 0.3); border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background: rgba(99, 102, 241, 0.5); }
-        .bg-pattern { background-image: radial-gradient(ellipse 80% 50% at 50% -20%, rgba(99, 102, 241, 0.15), transparent), radial-gradient(ellipse 60% 40% at 100% 100%, rgba(139, 92, 246, 0.1), transparent); }
+        .glass { background: rgba(12, 12, 18, 0.95); backdrop-filter: blur(20px); }
+        .trend-up { color: #22c55e; }
+        .trend-down { color: #ef4444; }
+        .trend-neutral { color: #6b7280; }
+        .score-bullish { background: linear-gradient(90deg, rgba(34, 197, 94, 0.2) 0%, transparent 100%); }
+        .score-bearish { background: linear-gradient(90deg, rgba(239, 68, 68, 0.2) 0%, transparent 100%); }
+        .signal-buy { background: rgba(34, 197, 94, 0.15); border-left: 3px solid #22c55e; }
+        .signal-sell { background: rgba(239, 68, 68, 0.15); border-left: 3px solid #ef4444; }
+        .update-flash { animation: flash 0.5s ease-out; }
+        @keyframes flash { 0% { background: rgba(59, 130, 246, 0.3); } 100% { background: transparent; } }
+        .live-dot { animation: pulse 2s infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+        tbody tr:hover { background: rgba(255, 255, 255, 0.02); }
+        .sort-btn.active { color: #60a5fa; }
+        .sort-btn.active::after { content: ' ▼'; font-size: 10px; }
+        .sort-btn.active.asc::after { content: ' ▲'; }
     </style>
 </head>
 <body class="bg-gray-950 text-gray-100 min-h-screen font-sans antialiased">
-    <div class="fixed inset-0 bg-pattern -z-10"></div>
-    <div class="fixed inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHBhdHRlcm4gaWQ9ImdyaWQiIHdpZHRoPSI2MCIgaGVpZ2h0PSI2MCIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PHBhdGggZD0iTSA2MCAwIEwgMCAwIDAgNjAiIGZpbGw9Im5vbmUiIHN0cm9rZT0icmdiYSgyNTUsMjU1LDI1NSwwLjAyKSIgc3Ryb2tlLXdpZHRoPSIxIi8+PC9wYXR0ZXJuPjwvZGVmcz48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSJ1cmwoI2dyaWQpIi8+PC9zdmc+')] opacity-50 -z-10"></div>
-    <div class="container mx-auto px-4 sm:px-6 py-8 max-w-7xl">
-        <header class="mb-10">
-            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6">
-                <div class="space-y-2">
-                    <div class="flex items-center gap-4">
-                        <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/20">
-                            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg>
-                        </div>
-                        <div>
-                            <h1 class="text-2xl sm:text-3xl font-bold tracking-tight"><span class="gradient-text">Crypto Trading</span></h1>
-                            <p class="text-gray-500 text-sm font-medium">Real-time TradingView Signals</p>
-                        </div>
+    <div class="max-w-7xl mx-auto px-4 py-6">
+        
+        <!-- Header -->
+        <header class="mb-6">
+            <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
+                <div class="flex items-center gap-4">
+                    <div class="w-10 h-10 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
+                        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <h1 class="text-xl font-bold">Crypto Trading Dashboard</h1>
+                        <p class="text-xs text-gray-500">TradingView Signals</p>
                     </div>
                 </div>
-                <div class="flex items-center gap-4">
-                    <div class="glass-subtle rounded-xl px-4 py-2.5 border border-gray-800/50">
-                        <div class="flex items-center gap-2">
-                            <span id="coin-count" class="text-lg font-bold text-white">-</span>
-                            <span class="text-xs text-gray-500 uppercase tracking-wider">Coins</span>
-                        </div>
+                
+                <!-- Controls -->
+                <div class="flex items-center gap-4 text-sm">
+                    <div class="flex items-center gap-2 bg-gray-900 rounded-lg px-3 py-2 border border-gray-800">
+                        <span class="text-gray-400">Sort:</span>
+                        <button onclick="sortCoins('score', 'desc')" id="sort-bullish" class="sort-btn px-2 py-1 rounded hover:bg-gray-800 active">Most Bullish</button>
+                        <button onclick="sortCoins('score', 'asc')" id="sort-bearish" class="sort-btn px-2 py-1 rounded hover:bg-gray-800">Most Bearish</button>
+                        <button onclick="sortCoins('name', 'asc')" id="sort-name" class="sort-btn px-2 py-1 rounded hover:bg-gray-800">Name</button>
+                        <button onclick="sortCoins('updated', 'desc')" id="sort-updated" class="sort-btn px-2 py-1 rounded hover:bg-gray-800">Recent</button>
                     </div>
-                    <div class="glass-subtle rounded-xl px-4 py-2.5 border border-gray-800/50 flex items-center gap-3">
-                        <div class="live-dot"><div class="w-2.5 h-2.5 bg-green-500 rounded-full relative z-10"></div></div>
-                        <div class="flex items-center gap-2">
-                            <span class="text-sm font-semibold text-green-400">Live</span>
-                            <span id="refresh-countdown" class="text-xs text-gray-500 font-mono tabular-nums">3s</span>
-                        </div>
+                    <div class="flex items-center gap-2 bg-gray-900 rounded-lg px-3 py-2 border border-gray-800">
+                        <div class="w-2 h-2 bg-green-500 rounded-full live-dot"></div>
+                        <span class="text-gray-400">Live</span>
+                        <span id="coin-count" class="font-bold text-white">0</span>
+                        <span class="text-gray-500">coins</span>
                     </div>
                 </div>
             </div>
         </header>
-        <div id="loading" class="flex flex-col items-center justify-center py-24">
-            <div class="relative">
-                <div class="w-16 h-16 rounded-full border-4 border-gray-800"></div>
-                <div class="w-16 h-16 rounded-full border-4 border-indigo-500 border-t-transparent animate-spin absolute inset-0"></div>
-            </div>
-            <p class="mt-6 text-gray-400 font-medium">Loading dashboard...</p>
+
+        <!-- Loading -->
+        <div id="loading" class="text-center py-20">
+            <div class="inline-block w-8 h-8 border-4 border-gray-700 border-t-indigo-500 rounded-full animate-spin"></div>
+            <p class="mt-4 text-gray-400">Loading...</p>
         </div>
-        <div id="error" class="hidden">
-            <div class="glass rounded-2xl border border-red-500/20 p-8 max-w-md mx-auto text-center">
-                <div class="w-16 h-16 rounded-full bg-red-500/10 flex items-center justify-center mx-auto mb-4">
-                    <svg class="w-8 h-8 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
-                </div>
-                <h3 class="text-lg font-semibold text-red-400 mb-2">Connection Lost</h3>
-                <p class="text-gray-400 text-sm mb-6">Unable to fetch coin data. Please check your connection.</p>
-                <button onclick="fetchCoins()" class="px-6 py-2.5 bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 rounded-xl text-sm font-semibold transition-all duration-300 shadow-lg shadow-indigo-500/20">Retry</button>
-            </div>
+
+        <!-- Error -->
+        <div id="error" class="hidden text-center py-20">
+            <p class="text-red-400 mb-4">Connection error</p>
+            <button onclick="fetchCoins()" class="px-4 py-2 bg-indigo-600 rounded-lg hover:bg-indigo-700">Retry</button>
         </div>
-        <div id="coins-grid" class="hidden grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-5"></div>
-        <footer class="mt-12 pt-8 border-t border-gray-800/50">
-            <div class="flex flex-col sm:flex-row justify-between items-center gap-4 text-xs text-gray-600">
-                <p>Powered by TradingView Webhooks</p>
-                <p>Last sync: <span id="last-update" class="text-gray-400 font-mono">—</span></p>
-            </div>
+
+        <!-- Table -->
+        <div id="table-container" class="hidden glass rounded-xl border border-gray-800 overflow-hidden">
+            <table class="w-full text-sm">
+                <thead>
+                    <tr class="border-b border-gray-800 text-left text-xs uppercase tracking-wider text-gray-500">
+                        <th class="px-4 py-3 font-medium">Coin</th>
+                        <th class="px-3 py-3 font-medium text-center">Score</th>
+                        <th class="px-3 py-3 font-medium text-center">1W</th>
+                        <th class="px-3 py-3 font-medium text-center">3D</th>
+                        <th class="px-3 py-3 font-medium text-center">1D</th>
+                        <th class="px-4 py-3 font-medium">Signal</th>
+                        <th class="px-3 py-3 font-medium text-right">Updated</th>
+                    </tr>
+                </thead>
+                <tbody id="coins-table"></tbody>
+            </table>
+        </div>
+
+        <!-- Footer -->
+        <footer class="mt-6 text-center text-xs text-gray-600">
+            Last sync: <span id="last-update">—</span> · Auto-refresh every 30s
         </footer>
     </div>
+
     <script>
-        const REFRESH_INTERVAL = 3000;
-        let countdown = 3;
-        const COIN_COLORS = {
-            'HYPE': { bg: 'from-violet-500/20 to-purple-500/10', border: 'border-violet-500/30', text: 'text-violet-400' },
-            'VIRTUAL': { bg: 'from-cyan-500/20 to-blue-500/10', border: 'border-cyan-500/30', text: 'text-cyan-400' },
-            'FARTCOIN': { bg: 'from-amber-500/20 to-orange-500/10', border: 'border-amber-500/30', text: 'text-amber-400' },
-            'PEPE': { bg: 'from-emerald-500/20 to-green-500/10', border: 'border-emerald-500/30', text: 'text-emerald-400' },
-            'DOGE': { bg: 'from-yellow-500/20 to-amber-500/10', border: 'border-yellow-500/30', text: 'text-yellow-400' }
-        };
-        function getCoinStyle(name) { return COIN_COLORS[name] || { bg: 'from-indigo-500/20 to-purple-500/10', border: 'border-indigo-500/30', text: 'text-indigo-400' }; }
+        // Config
+        const REFRESH_INTERVAL = 30000; // 30 seconds
+        let coinsData = [];
+        let currentSort = { field: 'score', direction: 'desc' };
+        let previousData = {};
+
+        // Score calculation: 1W=3pts, 3D=2pts, 1D=1pt
+        function calculateScore(trends) {
+            let score = 0;
+            if (trends['1w'] === 'uptrend') score += 3;
+            else if (trends['1w'] === 'downtrend') score -= 3;
+            if (trends['3d'] === 'uptrend') score += 2;
+            else if (trends['3d'] === 'downtrend') score -= 2;
+            if (trends['1d'] === 'uptrend') score += 1;
+            else if (trends['1d'] === 'downtrend') score -= 1;
+            return score;
+        }
+
+        // Sort coins
+        function sortCoins(field, direction) {
+            currentSort = { field, direction };
+            
+            // Update UI
+            document.querySelectorAll('.sort-btn').forEach(btn => {
+                btn.classList.remove('active', 'asc');
+            });
+            const btn = document.getElementById(`sort-${field === 'score' && direction === 'desc' ? 'bullish' : field === 'score' && direction === 'asc' ? 'bearish' : field}`);
+            if (btn) {
+                btn.classList.add('active');
+                if (direction === 'asc') btn.classList.add('asc');
+            }
+            
+            renderTable();
+        }
+
+        // Fetch data
         async function fetchCoins() {
             try {
                 const response = await fetch('/api/coins');
-                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                if (!response.ok) throw new Error('Failed to fetch');
                 const data = await response.json();
-                renderCoins(data.coins);
+                
+                coinsData = data.coins.map(coin => ({
+                    ...coin,
+                    score: calculateScore(coin.trends)
+                }));
+                
                 document.getElementById('coin-count').textContent = data.total_coins;
                 document.getElementById('loading').classList.add('hidden');
                 document.getElementById('error').classList.add('hidden');
-                document.getElementById('coins-grid').classList.remove('hidden');
-                document.getElementById('last-update').textContent = new Date().toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-                countdown = 3;
-                updateCountdown();
+                document.getElementById('table-container').classList.remove('hidden');
+                document.getElementById('last-update').textContent = new Date().toLocaleTimeString();
+                
+                renderTable();
             } catch (error) {
-                console.error('Fetch error:', error);
+                console.error(error);
                 document.getElementById('loading').classList.add('hidden');
                 document.getElementById('error').classList.remove('hidden');
-                document.getElementById('coins-grid').classList.add('hidden');
             }
         }
-        function renderCoins(coins) {
-            const grid = document.getElementById('coins-grid');
-            grid.innerHTML = coins.map((coin, index) => {
-                const isRecent = coin.last_updated_minutes_ago !== null && coin.last_updated_minutes_ago < 1;
-                const cardClass = isRecent ? 'recent-update' : '';
-                const style = getCoinStyle(coin.display_name);
-                const delay = index * 0.08;
-                const trendScore = calculateTrendScore(coin.trends);
-                return `<div class="coin-card glass rounded-2xl p-5 border border-gray-800/60 ${cardClass} transition-all duration-500 ease-out hover:border-gray-700/80" style="animation-delay: ${delay}s">
-                    <div class="flex items-start justify-between mb-5">
+
+        // Render table (smart update)
+        function renderTable() {
+            const sorted = [...coinsData].sort((a, b) => {
+                let aVal, bVal;
+                switch (currentSort.field) {
+                    case 'score': aVal = a.score; bVal = b.score; break;
+                    case 'name': aVal = a.display_name; bVal = b.display_name; break;
+                    case 'updated': aVal = a.last_updated_minutes_ago || 9999; bVal = b.last_updated_minutes_ago || 9999; break;
+                    default: aVal = a.score; bVal = b.score;
+                }
+                if (currentSort.field === 'name') {
+                    return currentSort.direction === 'asc' ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
+                }
+                return currentSort.direction === 'asc' ? aVal - bVal : bVal - aVal;
+            });
+
+            const tbody = document.getElementById('coins-table');
+            
+            sorted.forEach((coin, index) => {
+                let row = document.getElementById(`row-${coin.symbol}`);
+                const isNew = !row;
+                const prevCoin = previousData[coin.symbol];
+                const hasChanged = prevCoin && JSON.stringify(prevCoin) !== JSON.stringify(coin);
+                
+                if (isNew) {
+                    row = document.createElement('tr');
+                    row.id = `row-${coin.symbol}`;
+                    row.className = 'border-b border-gray-800/50 transition-colors duration-300';
+                    tbody.appendChild(row);
+                }
+                
+                const scoreClass = coin.score > 0 ? 'score-bullish' : coin.score < 0 ? 'score-bearish' : '';
+                const scoreColor = coin.score > 0 ? 'text-green-400' : coin.score < 0 ? 'text-red-400' : 'text-gray-400';
+                
+                row.innerHTML = `
+                    <td class="px-4 py-3">
                         <div class="flex items-center gap-3">
-                            <div class="coin-icon bg-gradient-to-br ${style.bg} ${style.border} ${style.text}">${coin.display_name.substring(0, 2)}</div>
-                            <div><h2 class="text-lg font-bold text-white tracking-tight">${coin.display_name}</h2><p class="text-xs text-gray-500 font-mono">${coin.symbol}</p></div>
+                            <div class="w-8 h-8 rounded-lg bg-gray-800 flex items-center justify-center text-xs font-bold text-gray-300">
+                                ${coin.display_name.substring(0, 2)}
+                            </div>
+                            <div>
+                                <div class="font-semibold text-white">${coin.display_name}</div>
+                                <div class="text-xs text-gray-500">${coin.symbol}</div>
+                            </div>
                         </div>
-                        ${renderTrendIndicator(trendScore)}
-                    </div>
-                    <div class="space-y-2 mb-5">${renderTrend('1W', coin.trends['1w'])}${renderTrend('3D', coin.trends['3d'])}${renderTrend('1D', coin.trends['1d'])}</div>
-                    ${renderSignal(coin.last_signal)}
-                    <div class="mt-5 pt-4 border-t border-gray-800/40 flex items-center justify-between">
-                        <div class="flex items-center gap-1.5 text-gray-500"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg><span class="text-xs">Updated</span></div>
-                        <span class="text-xs font-medium ${isRecent ? 'text-blue-400' : 'text-gray-400'}">${formatTime(coin.last_updated_minutes_ago)}</span>
-                    </div>
-                </div>`;
-            }).join('');
+                    </td>
+                    <td class="px-3 py-3 text-center ${scoreClass}">
+                        <span class="${scoreColor} font-bold text-base">${coin.score > 0 ? '+' : ''}${coin.score}</span>
+                    </td>
+                    <td class="px-3 py-3 text-center">${renderTrend(coin.trends['1w'])}</td>
+                    <td class="px-3 py-3 text-center">${renderTrend(coin.trends['3d'])}</td>
+                    <td class="px-3 py-3 text-center">${renderTrend(coin.trends['1d'])}</td>
+                    <td class="px-4 py-3">${renderSignal(coin.last_signal)}</td>
+                    <td class="px-3 py-3 text-right text-xs text-gray-500">${formatTime(coin.last_updated_minutes_ago)}</td>
+                `;
+                
+                if (hasChanged) {
+                    row.classList.add('update-flash');
+                    setTimeout(() => row.classList.remove('update-flash'), 500);
+                }
+                
+                previousData[coin.symbol] = { ...coin };
+            });
+
+            // Reorder rows
+            sorted.forEach((coin, index) => {
+                const row = document.getElementById(`row-${coin.symbol}`);
+                if (row && row.parentNode) {
+                    tbody.appendChild(row);
+                }
+            });
         }
-        function calculateTrendScore(trends) {
-            let score = 0;
-            if (trends['1w'] === 'uptrend') score += 3; else if (trends['1w'] === 'downtrend') score -= 3;
-            if (trends['3d'] === 'uptrend') score += 2; else if (trends['3d'] === 'downtrend') score -= 2;
-            if (trends['1d'] === 'uptrend') score += 1; else if (trends['1d'] === 'downtrend') score -= 1;
-            return score;
-        }
-        function renderTrendIndicator(score) {
-            let color, icon;
-            if (score >= 3) { color = 'text-green-400 bg-green-500/10'; icon = '↗'; }
-            else if (score <= -3) { color = 'text-red-400 bg-red-500/10'; icon = '↘'; }
-            else { color = 'text-gray-400 bg-gray-500/10'; icon = '→'; }
-            return `<div class="w-8 h-8 rounded-lg ${color} flex items-center justify-center text-lg font-bold">${icon}</div>`;
-        }
-        function renderTrend(timeframe, trend) {
-            if (!trend) return `<div class="trend-badge trend-neutral flex justify-between items-center py-2 px-3.5 rounded-xl"><span class="text-xs font-bold uppercase tracking-widest text-gray-500">${timeframe}</span><span class="text-gray-600 text-sm">—</span></div>`;
+
+        function renderTrend(trend) {
+            if (!trend) return '<span class="text-gray-600">—</span>';
             const isUp = trend === 'uptrend';
-            const trendClass = isUp ? 'trend-up' : 'trend-down';
-            const textColor = isUp ? 'text-green-400' : 'text-red-400';
+            const color = isUp ? 'trend-up' : 'trend-down';
             const icon = isUp ? '▲' : '▼';
-            const label = isUp ? 'UP' : 'DOWN';
-            return `<div class="trend-badge ${trendClass} flex justify-between items-center py-2 px-3.5 rounded-xl"><span class="text-xs font-bold uppercase tracking-widest text-gray-400">${timeframe}</span><span class="${textColor} font-bold text-sm flex items-center gap-1.5"><span class="text-[10px]">${icon}</span>${label}</span></div>`;
+            return `<span class="${color} font-semibold">${icon}</span>`;
         }
+
         function renderSignal(signal) {
-            if (!signal || !signal.type) return `<div class="py-4 px-4 bg-gray-800/30 rounded-xl text-center border border-gray-800/50"><span class="text-gray-500 text-sm">Awaiting signal...</span></div>`;
+            if (!signal || !signal.type) return '<span class="text-gray-600 text-xs">—</span>';
             const isBuy = signal.type === 'buy';
-            const signalClass = isBuy ? 'signal-buy' : 'signal-sell';
-            const textColor = isBuy ? 'text-green-400' : 'text-red-400';
-            const bgGlow = isBuy ? 'shadow-green-500/10' : 'shadow-red-500/10';
-            const icon = isBuy ? '💎' : '🔻';
+            const cls = isBuy ? 'signal-buy' : 'signal-sell';
             const label = isBuy ? 'BUY' : 'SELL';
-            return `<div class="${signalClass} rounded-xl py-4 px-4 shadow-lg ${bgGlow} relative z-10"><div class="flex items-center justify-between"><div class="flex items-center gap-2.5"><span class="text-2xl">${icon}</span><div><span class="${textColor} font-bold text-base tracking-wide">${label} SIGNAL</span><div class="text-xs text-gray-400 mt-0.5 flex items-center gap-1"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>${formatTime(signal.minutes_ago)}</div></div></div></div></div>`;
+            const color = isBuy ? 'text-green-400' : 'text-red-400';
+            return `<div class="${cls} px-2 py-1 rounded text-xs inline-flex items-center gap-1">
+                <span class="${color} font-bold">${label}</span>
+                <span class="text-gray-500">${formatTime(signal.minutes_ago)}</span>
+            </div>`;
         }
+
         function formatTime(minutes) {
-            if (minutes === null || minutes === undefined) return 'Never';
-            if (minutes < 1) return 'Just now';
-            if (minutes < 60) return `${minutes}m ago`;
+            if (minutes === null || minutes === undefined) return '—';
+            if (minutes < 1) return 'now';
+            if (minutes < 60) return `${minutes}m`;
             const hours = Math.floor(minutes / 60);
-            if (hours < 24) return `${hours}h ago`;
-            const days = Math.floor(hours / 24);
-            return `${days}d ago`;
+            if (hours < 24) return `${hours}h`;
+            return `${Math.floor(hours / 24)}d`;
         }
-        function updateCountdown() { const el = document.getElementById('refresh-countdown'); if (el) el.textContent = `${countdown}s`; }
+
+        // Init
         fetchCoins();
-        setInterval(() => { countdown--; if (countdown <= 0) { fetchCoins(); } else { updateCountdown(); } }, 1000);
-        document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') { fetchCoins(); } });
+        setInterval(fetchCoins, REFRESH_INTERVAL);
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'visible') fetchCoins();
+        });
     </script>
 </body>
 </html>
