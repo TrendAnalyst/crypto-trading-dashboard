@@ -3,529 +3,672 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TrendScope Pro – Multi-Timeframe Trading Signals</title>
-    <meta name="description" content="Professional cryptocurrency trading signals dashboard with real-time multi-timeframe trend analysis">
+    <title>TrendScope</title>
+    <meta name="description" content="Professional cryptocurrency trend analysis">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    fontFamily: { sans: ['Inter', 'system-ui', 'sans-serif'] },
-                    colors: {
-                        dark: { 950: '#05050a', 900: '#0a0a10', 850: '#0d0d15', 800: '#12121c', 700: '#1a1a28' },
-                        brand: { 500: '#6366f1', 400: '#818cf8', 300: '#a5b4fc' }
-                    }
-                }
-            }
-        }
-    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
     <style>
-        * { box-sizing: border-box; }
-        body { background: #05050a; }
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
         
-        /* Gradient backgrounds */
-        .bg-mesh {
-            background: 
-                radial-gradient(ellipse 80% 50% at 50% -20%, rgba(99, 102, 241, 0.15), transparent),
-                radial-gradient(ellipse 50% 50% at 100% 50%, rgba(139, 92, 246, 0.08), transparent),
-                radial-gradient(ellipse 50% 50% at 0% 80%, rgba(59, 130, 246, 0.06), transparent);
+        :root {
+            --bg: #000000;
+            --bg-elevated: #0a0a0a;
+            --bg-hover: #111111;
+            --border: rgba(255, 255, 255, 0.06);
+            --border-hover: rgba(255, 255, 255, 0.1);
+            --text-primary: #ffffff;
+            --text-secondary: rgba(255, 255, 255, 0.5);
+            --text-tertiary: rgba(255, 255, 255, 0.3);
+            --accent: #0a84ff;
+            --green: #30d158;
+            --red: #ff453a;
+            --radius: 12px;
+            --radius-sm: 8px;
         }
         
-        /* Glass card */
-        .glass-card {
-            background: linear-gradient(135deg, rgba(15, 15, 25, 0.9) 0%, rgba(10, 10, 18, 0.95) 100%);
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5), 
-                        0 0 0 1px rgba(255, 255, 255, 0.02) inset;
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg);
+            color: var(--text-primary);
+            line-height: 1.5;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
         }
         
-        /* Premium header */
-        .header-glow {
-            background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(139, 92, 246, 0.05));
-            border-bottom: 1px solid rgba(99, 102, 241, 0.1);
+        /* Layout */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 24px;
         }
         
-        /* Table styling */
-        .data-table { border-collapse: separate; border-spacing: 0; }
-        .data-table thead th {
-            background: linear-gradient(180deg, rgba(15, 15, 25, 0.98) 0%, rgba(10, 10, 18, 0.98) 100%);
-            backdrop-filter: blur(10px);
+        /* Header */
+        header {
             position: sticky;
             top: 0;
-            z-index: 20;
-        }
-        .data-row {
-            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-        .data-row:hover {
-            background: linear-gradient(90deg, rgba(99, 102, 241, 0.08), transparent);
-            transform: translateX(4px);
-        }
-        .data-row:hover .coin-icon {
-            transform: scale(1.1) rotate(-3deg);
-            box-shadow: 0 8px 16px rgba(99, 102, 241, 0.25);
-        }
-        .data-row:hover .coin-name {
-            color: #a5b4fc;
+            z-index: 100;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: saturate(180%) blur(20px);
+            -webkit-backdrop-filter: saturate(180%) blur(20px);
+            border-bottom: 1px solid var(--border);
         }
         
-        /* Coin icons with gradients */
-        .coin-icon {
-            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-            position: relative;
-            overflow: hidden;
-        }
-        .coin-icon::before {
-            content: '';
-            position: absolute;
-            top: -50%;
-            left: -50%;
-            width: 200%;
-            height: 200%;
-            background: linear-gradient(45deg, transparent 40%, rgba(255,255,255,0.1) 50%, transparent 60%);
-            transform: rotate(45deg);
-            transition: all 0.5s;
-        }
-        .coin-icon:hover::before {
-            left: 100%;
+        .header-inner {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            height: 64px;
         }
         
-        /* Score visualization */
-        .score-bar-container {
-            background: rgba(255, 255, 255, 0.03);
-            border-radius: 6px;
-            overflow: hidden;
-        }
-        .score-bar {
-            height: 6px;
-            border-radius: 6px;
-            transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-            position: relative;
-        }
-        .score-bar.bullish {
-            background: linear-gradient(90deg, #10b981, #34d399);
-            box-shadow: 0 0 20px rgba(16, 185, 129, 0.4);
-        }
-        .score-bar.bearish {
-            background: linear-gradient(90deg, #f43f5e, #fb7185);
-            box-shadow: 0 0 20px rgba(244, 63, 94, 0.4);
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
         }
         
-        /* Trend indicators */
-        .trend-indicator {
-            transition: all 0.2s ease;
-            display: inline-flex;
+        .logo-icon {
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, #0a84ff, #5e5ce6);
+            border-radius: 8px;
+            display: flex;
             align-items: center;
             justify-content: center;
-            width: 36px;
-            height: 36px;
-            border-radius: 10px;
-        }
-        .trend-indicator.up {
-            background: rgba(16, 185, 129, 0.1);
-            border: 1px solid rgba(16, 185, 129, 0.2);
-            color: #34d399;
-        }
-        .trend-indicator.down {
-            background: rgba(244, 63, 94, 0.1);
-            border: 1px solid rgba(244, 63, 94, 0.2);
-            color: #fb7185;
-        }
-        .trend-indicator.neutral {
-            background: rgba(100, 116, 139, 0.1);
-            border: 1px solid rgba(100, 116, 139, 0.15);
-            color: #64748b;
-        }
-        .data-row:hover .trend-indicator {
-            transform: scale(1.1);
         }
         
-        /* Signal badges */
-        .signal-badge {
-            display: inline-flex;
+        .logo-icon svg {
+            width: 18px;
+            height: 18px;
+            color: white;
+        }
+        
+        .logo-text {
+            font-size: 17px;
+            font-weight: 600;
+            letter-spacing: -0.02em;
+        }
+        
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+        
+        /* Pill buttons */
+        .pill-group {
+            display: flex;
+            background: var(--bg-elevated);
+            border-radius: 10px;
+            padding: 3px;
+            border: 1px solid var(--border);
+        }
+        
+        .pill-btn {
+            padding: 6px 14px;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            background: transparent;
+            border: none;
+            border-radius: 7px;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+        
+        .pill-btn:hover {
+            color: var(--text-primary);
+        }
+        
+        .pill-btn.active {
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--text-primary);
+        }
+        
+        /* Status badge */
+        .status {
+            display: flex;
             align-items: center;
             gap: 8px;
             padding: 6px 12px;
-            border-radius: 8px;
-            font-size: 12px;
-            font-weight: 600;
-            transition: all 0.2s ease;
-        }
-        .signal-badge.buy {
-            background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(16, 185, 129, 0.05));
-            border: 1px solid rgba(16, 185, 129, 0.25);
-            color: #34d399;
-        }
-        .signal-badge.sell {
-            background: linear-gradient(135deg, rgba(244, 63, 94, 0.15), rgba(244, 63, 94, 0.05));
-            border: 1px solid rgba(244, 63, 94, 0.25);
-            color: #fb7185;
-        }
-        .signal-badge:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-        }
-        
-        /* Sort buttons */
-        .sort-pill {
-            padding: 8px 16px;
-            border-radius: 10px;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
+            border-radius: 20px;
             font-size: 13px;
+        }
+        
+        .status-dot {
+            width: 6px;
+            height: 6px;
+            background: var(--green);
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        .status-count {
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+        
+        .status-label {
+            color: var(--text-tertiary);
+        }
+        
+        /* Main content */
+        main {
+            padding: 32px 0 100px;
+        }
+        
+        /* Loading */
+        #loading {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 120px 0;
+        }
+        
+        .spinner {
+            width: 32px;
+            height: 32px;
+            border: 2px solid var(--border);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        #loading p {
+            margin-top: 16px;
+            color: var(--text-tertiary);
+            font-size: 14px;
+        }
+        
+        /* Error */
+        #error {
+            text-align: center;
+            padding: 120px 24px;
+        }
+        
+        #error h3 {
+            font-size: 17px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+        
+        #error p {
+            color: var(--text-secondary);
+            font-size: 14px;
+            margin-bottom: 24px;
+        }
+        
+        .btn-primary {
+            display: inline-flex;
+            align-items: center;
+            padding: 10px 20px;
+            background: var(--accent);
+            color: white;
+            font-size: 14px;
             font-weight: 500;
-            color: #64748b;
-            transition: all 0.2s ease;
-            border: 1px solid transparent;
-        }
-        .sort-pill:hover {
-            color: #a5b4fc;
-            background: rgba(99, 102, 241, 0.1);
-        }
-        .sort-pill.active {
-            color: #fff;
-            background: linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(139, 92, 246, 0.15));
-            border-color: rgba(99, 102, 241, 0.3);
-            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.15);
+            border: none;
+            border-radius: var(--radius);
+            cursor: pointer;
+            transition: opacity 0.15s;
         }
         
-        /* Status pill */
-        .status-pill {
-            background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(16, 185, 129, 0.05));
-            border: 1px solid rgba(16, 185, 129, 0.2);
+        .btn-primary:hover {
+            opacity: 0.9;
         }
         
-        /* Live indicator */
-        .live-pulse {
-            animation: livePulse 2s ease-in-out infinite;
-        }
-        @keyframes livePulse {
-            0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); }
-            50% { opacity: 0.8; box-shadow: 0 0 0 8px rgba(16, 185, 129, 0); }
-        }
-        
-        /* Scrollbar */
-        ::-webkit-scrollbar { width: 8px; height: 8px; }
-        ::-webkit-scrollbar-track { background: rgba(0, 0, 0, 0.2); border-radius: 4px; }
-        ::-webkit-scrollbar-thumb { background: rgba(99, 102, 241, 0.3); border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background: rgba(99, 102, 241, 0.5); }
-        
-        /* Logo animation */
-        .logo-glow {
-            animation: logoGlow 3s ease-in-out infinite;
-        }
-        @keyframes logoGlow {
-            0%, 100% { box-shadow: 0 0 20px rgba(99, 102, 241, 0.3), 0 0 40px rgba(139, 92, 246, 0.2); }
-            50% { box-shadow: 0 0 30px rgba(99, 102, 241, 0.5), 0 0 60px rgba(139, 92, 246, 0.3); }
+        /* Table */
+        .table-container {
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            overflow: hidden;
         }
         
-        /* Coin name hover */
-        .coin-name {
-            transition: color 0.2s ease;
+        table {
+            width: 100%;
+            border-collapse: collapse;
         }
         
-        /* Score number */
+        thead {
+            background: rgba(255, 255, 255, 0.02);
+        }
+        
+        th {
+            padding: 12px 20px;
+            font-size: 11px;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-tertiary);
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        th.center { text-align: center; }
+        th.right { text-align: right; }
+        
+        tbody tr {
+            border-bottom: 1px solid var(--border);
+            transition: background 0.15s ease;
+        }
+        
+        tbody tr:last-child {
+            border-bottom: none;
+        }
+        
+        tbody tr:hover {
+            background: var(--bg-hover);
+        }
+        
+        td {
+            padding: 16px 20px;
+            font-size: 14px;
+            vertical-align: middle;
+        }
+        
+        td.center { text-align: center; }
+        td.right { text-align: right; }
+        
+        /* Asset cell */
+        .asset {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+        
+        .asset-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 13px;
+            font-weight: 600;
+            color: white;
+            transition: transform 0.2s ease;
+        }
+        
+        tbody tr:hover .asset-icon {
+            transform: scale(1.05);
+        }
+        
+        .asset-name {
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 2px;
+        }
+        
+        .asset-symbol {
+            font-size: 12px;
+            color: var(--text-tertiary);
+            font-family: 'SF Mono', 'Menlo', monospace;
+        }
+        
+        /* Score */
+        .score {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+        }
+        
         .score-value {
+            font-size: 16px;
+            font-weight: 600;
             font-variant-numeric: tabular-nums;
-            transition: all 0.2s ease;
         }
-        .data-row:hover .score-value {
+        
+        .score-value.positive { color: var(--green); }
+        .score-value.negative { color: var(--red); }
+        .score-value.neutral { color: var(--text-tertiary); }
+        
+        .score-bar {
+            width: 60px;
+            height: 3px;
+            background: rgba(255, 255, 255, 0.06);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+        
+        .score-fill {
+            height: 100%;
+            border-radius: 2px;
+            transition: width 0.3s ease;
+        }
+        
+        .score-fill.positive { background: var(--green); }
+        .score-fill.negative { background: var(--red); }
+        
+        /* Trend indicator */
+        .trend {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px;
+            height: 32px;
+            border-radius: var(--radius-sm);
+            transition: transform 0.15s ease;
+        }
+        
+        tbody tr:hover .trend {
             transform: scale(1.1);
         }
         
-        /* Footer gradient */
-        .footer-fade {
-            background: linear-gradient(180deg, transparent, rgba(5, 5, 10, 0.8));
+        .trend.up {
+            background: rgba(48, 209, 88, 0.12);
+            color: var(--green);
         }
+        
+        .trend.down {
+            background: rgba(255, 69, 58, 0.12);
+            color: var(--red);
+        }
+        
+        .trend.neutral {
+            background: rgba(255, 255, 255, 0.04);
+            color: var(--text-tertiary);
+        }
+        
+        .trend svg {
+            width: 14px;
+            height: 14px;
+        }
+        
+        /* Signal */
+        .signal {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 10px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 500;
+            transition: transform 0.15s ease;
+        }
+        
+        .signal:hover {
+            transform: translateY(-1px);
+        }
+        
+        .signal.buy {
+            background: rgba(48, 209, 88, 0.12);
+            color: var(--green);
+        }
+        
+        .signal.sell {
+            background: rgba(255, 69, 58, 0.12);
+            color: var(--red);
+        }
+        
+        .signal-time {
+            color: var(--text-tertiary);
+            font-weight: 400;
+        }
+        
+        .no-signal {
+            color: var(--text-tertiary);
+            font-size: 13px;
+        }
+        
+        /* Updated time */
+        .updated {
+            font-size: 13px;
+            color: var(--text-tertiary);
+        }
+        
+        /* Footer */
+        .footer {
+            margin-top: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 12px;
+            color: var(--text-tertiary);
+        }
+        
+        .footer-legend {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+        
+        .footer-legend span {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        .legend-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 2px;
+        }
+        
+        .legend-dot.up { background: var(--green); }
+        .legend-dot.down { background: var(--red); }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .container { padding: 0 16px; }
+            .header-inner { height: 56px; }
+            .pill-group { display: none; }
+            th, td { padding: 12px 14px; }
+            .asset-icon { width: 36px; height: 36px; font-size: 12px; }
+        }
+        
+        /* Hidden class */
+        .hidden { display: none !important; }
     </style>
 </head>
-<body class="text-gray-100 min-h-screen font-sans antialiased bg-mesh">
-    
-    <!-- Header -->
-    <header class="header-glow sticky top-0 z-50 backdrop-blur-xl">
-        <div class="max-w-7xl mx-auto px-6 py-4">
-            <div class="flex items-center justify-between">
-                <!-- Brand -->
-                <div class="flex items-center gap-4">
-                    <div class="logo-glow w-11 h-11 rounded-xl bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 flex items-center justify-center">
-                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+<body>
+    <header>
+        <div class="container">
+            <div class="header-inner">
+                <div class="logo">
+                    <div class="logo-icon">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
                         </svg>
                     </div>
-                    <div>
-                        <h1 class="text-xl font-bold text-white">TrendScope<span class="text-indigo-400">Pro</span></h1>
-                        <p class="text-xs text-gray-500">Multi-Timeframe Signal Analysis</p>
-                    </div>
+                    <span class="logo-text">TrendScope</span>
                 </div>
                 
-                <!-- Right side -->
-                <div class="flex items-center gap-4">
-                    <!-- Sort controls -->
-                    <div class="hidden md:flex items-center bg-dark-800/50 rounded-xl p-1 border border-white/5">
-                        <button onclick="sortCoins('score', 'desc')" id="sort-bullish" class="sort-pill active">
-                            <span class="flex items-center gap-1.5">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"/></svg>
-                                Bullish
-                            </span>
-                        </button>
-                        <button onclick="sortCoins('score', 'asc')" id="sort-bearish" class="sort-pill">
-                            <span class="flex items-center gap-1.5">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
-                                Bearish
-                            </span>
-                        </button>
-                        <button onclick="sortCoins('name', 'asc')" id="sort-name" class="sort-pill">A–Z</button>
+                <div class="header-right">
+                    <div class="pill-group">
+                        <button class="pill-btn active" id="sort-bullish" onclick="sortCoins('score', 'desc')">Bullish</button>
+                        <button class="pill-btn" id="sort-bearish" onclick="sortCoins('score', 'asc')">Bearish</button>
+                        <button class="pill-btn" id="sort-name" onclick="sortCoins('name', 'asc')">A–Z</button>
                     </div>
                     
-                    <!-- Status -->
-                    <div class="status-pill flex items-center gap-3 px-4 py-2 rounded-xl">
-                        <div class="live-pulse w-2.5 h-2.5 bg-emerald-400 rounded-full"></div>
-                        <span class="text-sm text-emerald-400 font-medium">Live</span>
-                        <div class="h-4 w-px bg-emerald-500/20"></div>
-                        <span class="text-sm font-bold text-white" id="coin-count">0</span>
-                        <span class="text-xs text-gray-500">assets</span>
+                    <div class="status">
+                        <div class="status-dot"></div>
+                        <span class="status-count" id="coin-count">0</span>
+                        <span class="status-label">assets</span>
                     </div>
                 </div>
             </div>
         </div>
     </header>
-
-    <!-- Main content -->
-    <main class="max-w-7xl mx-auto px-6 py-8">
-        
-        <!-- Loading state -->
-        <div id="loading" class="flex flex-col items-center justify-center py-32">
-            <div class="relative">
-                <div class="w-16 h-16 rounded-full border-4 border-dark-700"></div>
-                <div class="absolute inset-0 w-16 h-16 rounded-full border-4 border-indigo-500 border-t-transparent animate-spin"></div>
-            </div>
-            <p class="mt-6 text-gray-500">Loading market data...</p>
-        </div>
-
-        <!-- Error state -->
-        <div id="error" class="hidden">
-            <div class="glass-card rounded-2xl p-12 text-center max-w-md mx-auto">
-                <div class="w-16 h-16 rounded-2xl bg-red-500/10 flex items-center justify-center mx-auto mb-6">
-                    <svg class="w-8 h-8 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
-                    </svg>
-                </div>
-                <h3 class="text-lg font-semibold text-white mb-2">Connection Error</h3>
-                <p class="text-gray-500 text-sm mb-6">Unable to load market data. Please try again.</p>
-                <button onclick="fetchCoins()" class="px-6 py-3 bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 rounded-xl text-sm font-semibold transition-all shadow-lg shadow-indigo-500/25 hover:shadow-indigo-500/40">
-                    Retry Connection
-                </button>
-            </div>
-        </div>
-
-        <!-- Data table -->
-        <div id="table-container" class="hidden">
-            <div class="glass-card rounded-2xl overflow-hidden">
-                <div class="overflow-x-auto">
-                    <table class="data-table w-full">
-                        <thead>
-                            <tr class="text-left text-[11px] uppercase tracking-widest text-gray-500 border-b border-white/5">
-                                <th class="px-6 py-5 font-semibold">Asset</th>
-                                <th class="px-4 py-5 font-semibold text-center" style="width: 140px;">Trend Score</th>
-                                <th class="px-4 py-5 font-semibold text-center" style="width: 80px;">1W</th>
-                                <th class="px-4 py-5 font-semibold text-center" style="width: 80px;">3D</th>
-                                <th class="px-4 py-5 font-semibold text-center" style="width: 80px;">1D</th>
-                                <th class="px-4 py-5 font-semibold" style="width: 160px;">Latest Signal</th>
-                                <th class="px-6 py-5 font-semibold text-right" style="width: 100px;">Updated</th>
-                            </tr>
-                        </thead>
-                        <tbody id="coins-table" class="divide-y divide-white/[0.02]"></tbody>
-                    </table>
-                </div>
+    
+    <main>
+        <div class="container">
+            <div id="loading">
+                <div class="spinner"></div>
+                <p>Loading</p>
             </div>
             
-            <!-- Legend -->
-            <div class="mt-6 flex flex-wrap items-center justify-between gap-4 text-xs text-gray-600">
-                <div class="flex items-center gap-6">
-                    <span class="flex items-center gap-2">
-                        <span class="w-3 h-3 rounded bg-gradient-to-r from-emerald-500 to-emerald-400"></span>
-                        Uptrend
-                    </span>
-                    <span class="flex items-center gap-2">
-                        <span class="w-3 h-3 rounded bg-gradient-to-r from-rose-500 to-rose-400"></span>
-                        Downtrend
-                    </span>
-                    <span class="text-gray-700">|</span>
-                    <span>Score: 1W (±6) · 3D (±3) · 1D (±1)</span>
+            <div id="error" class="hidden">
+                <h3>Unable to connect</h3>
+                <p>Please check your connection and try again.</p>
+                <button class="btn-primary" onclick="fetchCoins()">Retry</button>
+            </div>
+            
+            <div id="table-container" class="hidden">
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Asset</th>
+                                <th class="center" style="width:100px">Score</th>
+                                <th class="center" style="width:70px">1W</th>
+                                <th class="center" style="width:70px">3D</th>
+                                <th class="center" style="width:70px">1D</th>
+                                <th style="width:140px">Signal</th>
+                                <th class="right" style="width:90px">Updated</th>
+                            </tr>
+                        </thead>
+                        <tbody id="coins-table"></tbody>
+                    </table>
                 </div>
-                <div class="flex items-center gap-2">
-                    <span class="text-gray-500">Last sync:</span>
-                    <span id="last-update" class="text-gray-400 font-medium">—</span>
+                
+                <div class="footer">
+                    <div class="footer-legend">
+                        <span><div class="legend-dot up"></div>Uptrend</span>
+                        <span><div class="legend-dot down"></div>Downtrend</span>
+                        <span style="color: var(--text-tertiary)">Score: 1W ±6 · 3D ±3 · 1D ±1</span>
+                    </div>
+                    <div>
+                        Updated <span id="last-update">—</span>
+                    </div>
                 </div>
             </div>
         </div>
     </main>
 
-    <!-- Footer -->
-    <footer class="fixed bottom-0 left-0 right-0 footer-fade pointer-events-none">
-        <div class="max-w-7xl mx-auto px-6 py-4">
-            <p class="text-center text-xs text-gray-700">
-                TrendScope Pro © 2026 · Real-time market analysis
-            </p>
-        </div>
-    </footer>
-
     <script>
-        // === CONFIG ===
-        const REFRESH_INTERVAL = 30000;
-        let coinsData = [];
-        let currentSort = { field: 'score', direction: 'desc' };
+        const REFRESH = 30000;
+        let coins = [];
+        let sort = { field: 'score', dir: 'desc' };
 
-        // === SCORE: 1W=6, 3D=3, 1D=1 ===
-        function calculateScore(trends) {
-            let score = 0;
-            if (trends['1w'] === 'uptrend') score += 6;
-            else if (trends['1w'] === 'downtrend') score -= 6;
-            if (trends['3d'] === 'uptrend') score += 3;
-            else if (trends['3d'] === 'downtrend') score -= 3;
-            if (trends['1d'] === 'uptrend') score += 1;
-            else if (trends['1d'] === 'downtrend') score -= 1;
-            return score;
+        const COLORS = {
+            HYPE: 'linear-gradient(135deg, #8b5cf6, #a855f7)',
+            VIRTUAL: 'linear-gradient(135deg, #06b6d4, #0ea5e9)',
+            FARTCOIN: 'linear-gradient(135deg, #f59e0b, #f97316)',
+            PEPE: 'linear-gradient(135deg, #22c55e, #16a34a)',
+            DOGE: 'linear-gradient(135deg, #eab308, #f59e0b)',
+            BTC: 'linear-gradient(135deg, #f97316, #ea580c)',
+            ETH: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
+            SOL: 'linear-gradient(135deg, #9333ea, #c026d3)',
+            DEFAULT: 'linear-gradient(135deg, #374151, #4b5563)'
+        };
+
+        function calcScore(t) {
+            let s = 0;
+            if (t['1w'] === 'uptrend') s += 6; else if (t['1w'] === 'downtrend') s -= 6;
+            if (t['3d'] === 'uptrend') s += 3; else if (t['3d'] === 'downtrend') s -= 3;
+            if (t['1d'] === 'uptrend') s += 1; else if (t['1d'] === 'downtrend') s -= 1;
+            return s;
         }
 
-        // === SORTING ===
-        function sortCoins(field, direction) {
-            currentSort = { field, direction };
-            document.querySelectorAll('.sort-pill').forEach(b => b.classList.remove('active'));
-            const id = field === 'score' ? (direction === 'desc' ? 'sort-bullish' : 'sort-bearish') : 'sort-name';
-            document.getElementById(id)?.classList.add('active');
-            renderTable();
+        function sortCoins(field, dir) {
+            sort = { field, dir };
+            document.querySelectorAll('.pill-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById(field === 'score' ? (dir === 'desc' ? 'sort-bullish' : 'sort-bearish') : 'sort-name')?.classList.add('active');
+            render();
         }
 
-        // === FETCH ===
         async function fetchCoins() {
             try {
                 const res = await fetch('/api/coins');
-                if (!res.ok) throw new Error('Failed');
+                if (!res.ok) throw new Error();
                 const data = await res.json();
-                coinsData = data.coins.map(c => ({ ...c, score: calculateScore(c.trends) }));
+                coins = data.coins.map(c => ({ ...c, score: calcScore(c.trends) }));
                 document.getElementById('coin-count').textContent = data.total_coins;
                 document.getElementById('loading').classList.add('hidden');
                 document.getElementById('error').classList.add('hidden');
                 document.getElementById('table-container').classList.remove('hidden');
                 document.getElementById('last-update').textContent = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
-                renderTable();
+                render();
             } catch (e) {
-                console.error(e);
                 document.getElementById('loading').classList.add('hidden');
                 document.getElementById('error').classList.remove('hidden');
             }
         }
 
-        // === RENDER ===
-        function renderTable() {
-            const sorted = [...coinsData].sort((a, b) => {
-                if (currentSort.field === 'score') return currentSort.direction === 'desc' ? b.score - a.score : a.score - b.score;
+        function render() {
+            const sorted = [...coins].sort((a, b) => {
+                if (sort.field === 'score') return sort.dir === 'desc' ? b.score - a.score : a.score - b.score;
                 return a.display_name.localeCompare(b.display_name);
             });
 
             const tbody = document.getElementById('coins-table');
-            const existingRows = {};
-            tbody.querySelectorAll('tr').forEach(row => existingRows[row.id] = row);
+            const existing = {};
+            tbody.querySelectorAll('tr').forEach(r => existing[r.id] = r);
 
-            sorted.forEach(coin => {
-                const rowId = `row-${coin.symbol.replace(/\./g, '-')}`;
-                let row = existingRows[rowId];
-                if (!row) {
-                    row = document.createElement('tr');
-                    row.id = rowId;
-                    row.className = 'data-row';
-                    tbody.appendChild(row);
-                }
+            sorted.forEach(c => {
+                const id = `r-${c.symbol.replace(/\./g, '')}`;
+                let row = existing[id];
+                if (!row) { row = document.createElement('tr'); row.id = id; tbody.appendChild(row); }
 
-                const maxScore = 10;
-                const scorePercent = Math.min(100, (Math.abs(coin.score) / maxScore) * 100);
-                const isBullish = coin.score > 0;
-                const scoreBarClass = isBullish ? 'bullish' : coin.score < 0 ? 'bearish' : '';
-                const scoreColor = isBullish ? 'text-emerald-400' : coin.score < 0 ? 'text-rose-400' : 'text-gray-500';
-                const iconGradient = getIconGradient(coin.display_name);
+                const pct = Math.min(100, (Math.abs(c.score) / 10) * 100);
+                const cls = c.score > 0 ? 'positive' : c.score < 0 ? 'negative' : 'neutral';
+                const bg = COLORS[c.display_name] || COLORS.DEFAULT;
 
                 row.innerHTML = `
-                    <td class="px-6 py-4">
-                        <div class="flex items-center gap-4">
-                            <div class="coin-icon w-11 h-11 rounded-xl ${iconGradient} flex items-center justify-center shadow-lg">
-                                <span class="text-sm font-bold text-white">${coin.display_name.substring(0, 2)}</span>
-                            </div>
+                    <td>
+                        <div class="asset">
+                            <div class="asset-icon" style="background:${bg}">${c.display_name.slice(0,2)}</div>
                             <div>
-                                <div class="coin-name font-semibold text-white text-base">${coin.display_name}</div>
-                                <div class="text-[11px] text-gray-600 font-mono mt-0.5">${coin.symbol}</div>
+                                <div class="asset-name">${c.display_name}</div>
+                                <div class="asset-symbol">${c.symbol}</div>
                             </div>
                         </div>
                     </td>
-                    <td class="px-4 py-4">
-                        <div class="flex flex-col items-center gap-2">
-                            <span class="score-value ${scoreColor} font-bold text-lg">${coin.score > 0 ? '+' : ''}${coin.score}</span>
-                            <div class="score-bar-container w-full h-1.5">
-                                <div class="score-bar ${scoreBarClass}" style="width: ${scorePercent}%"></div>
-                            </div>
+                    <td class="center">
+                        <div class="score">
+                            <span class="score-value ${cls}">${c.score > 0 ? '+' : ''}${c.score}</span>
+                            <div class="score-bar"><div class="score-fill ${cls}" style="width:${pct}%"></div></div>
                         </div>
                     </td>
-                    <td class="px-4 py-4 text-center">${renderTrend(coin.trends['1w'])}</td>
-                    <td class="px-4 py-4 text-center">${renderTrend(coin.trends['3d'])}</td>
-                    <td class="px-4 py-4 text-center">${renderTrend(coin.trends['1d'])}</td>
-                    <td class="px-4 py-4">${renderSignal(coin.last_signal)}</td>
-                    <td class="px-6 py-4 text-right">
-                        <span class="text-xs text-gray-600">${formatTime(coin.last_updated_minutes_ago)}</span>
-                    </td>
+                    <td class="center">${trend(c.trends['1w'])}</td>
+                    <td class="center">${trend(c.trends['3d'])}</td>
+                    <td class="center">${trend(c.trends['1d'])}</td>
+                    <td>${signal(c.last_signal)}</td>
+                    <td class="right"><span class="updated">${time(c.last_updated_minutes_ago)}</span></td>
                 `;
                 tbody.appendChild(row);
             });
 
-            // Remove stale rows
-            const currentIds = new Set(sorted.map(c => `row-${c.symbol.replace(/\./g, '-')}`));
-            Object.keys(existingRows).forEach(id => { if (!currentIds.has(id)) existingRows[id].remove(); });
+            const ids = new Set(sorted.map(c => `r-${c.symbol.replace(/\./g, '')}`));
+            Object.keys(existing).forEach(id => { if (!ids.has(id)) existing[id].remove(); });
         }
 
-        function getIconGradient(name) {
-            const gradients = {
-                'HYPE': 'bg-gradient-to-br from-violet-500 to-purple-600',
-                'VIRTUAL': 'bg-gradient-to-br from-cyan-500 to-blue-600',
-                'FARTCOIN': 'bg-gradient-to-br from-amber-500 to-orange-600',
-                'PEPE': 'bg-gradient-to-br from-emerald-500 to-green-600',
-                'DOGE': 'bg-gradient-to-br from-yellow-500 to-amber-600',
-                'BTC': 'bg-gradient-to-br from-orange-500 to-yellow-600',
-                'ETH': 'bg-gradient-to-br from-indigo-500 to-purple-600',
-                'SOL': 'bg-gradient-to-br from-purple-500 to-pink-600',
-            };
-            return gradients[name] || 'bg-gradient-to-br from-gray-600 to-gray-700';
+        function trend(t) {
+            if (!t) return '<div class="trend neutral">–</div>';
+            if (t === 'uptrend') return '<div class="trend up"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 15l7-7 7 7"/></svg></div>';
+            return '<div class="trend down"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/></svg></div>';
         }
 
-        function renderTrend(trend) {
-            if (!trend) return '<div class="trend-indicator neutral"><span class="text-lg">–</span></div>';
-            if (trend === 'uptrend') return '<div class="trend-indicator up"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 15l7-7 7 7"/></svg></div>';
-            return '<div class="trend-indicator down"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/></svg></div>';
+        function signal(s) {
+            if (!s?.type) return '<span class="no-signal">—</span>';
+            const buy = s.type === 'buy';
+            return `<div class="signal ${buy ? 'buy' : 'sell'}">${buy ? 'Buy' : 'Sell'}<span class="signal-time">${time(s.minutes_ago)}</span></div>`;
         }
 
-        function renderSignal(signal) {
-            if (!signal?.type) return '<span class="text-gray-700 text-xs">No signal</span>';
-            const isBuy = signal.type === 'buy';
-            return `
-                <div class="signal-badge ${isBuy ? 'buy' : 'sell'}">
-                    <span>${isBuy ? '● BUY' : '● SELL'}</span>
-                    <span class="opacity-50 text-[10px]">${formatTime(signal.minutes_ago)}</span>
-                </div>
-            `;
+        function time(m) {
+            if (m == null) return '—';
+            if (m < 1) return 'now';
+            if (m < 60) return m + 'm';
+            const h = Math.floor(m / 60);
+            if (h < 24) return h + 'h';
+            return Math.floor(h / 24) + 'd';
         }
 
-        function formatTime(min) {
-            if (min == null) return '—';
-            if (min < 1) return 'now';
-            if (min < 60) return `${min}m`;
-            const h = Math.floor(min / 60);
-            if (h < 24) return `${h}h`;
-            const d = Math.floor(h / 24);
-            return `${d}d`;
-        }
-
-        // === INIT ===
         fetchCoins();
-        setInterval(fetchCoins, REFRESH_INTERVAL);
+        setInterval(fetchCoins, REFRESH);
         document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') fetchCoins(); });
     </script>
 </body>
