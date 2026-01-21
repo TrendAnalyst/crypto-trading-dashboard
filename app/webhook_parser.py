@@ -2,14 +2,10 @@
 TradingView Webhook Parser
 Parst eingehende Webhook-Nachrichten im Format:
     "SYMBOL, TIMEFRAME - VALUE"
-    "SYMBOL MACRO - TIMEFRAME - VALUE"
-    "SYMBOL MACRO MACD - TIMEFRAME - VALUE"
 
 Beispiele:
     "HYPEUSDT.P, 1W - DOWNTREND"
     "HYPEUSDT.P, 1D - Buy Signal"
-    "BTC MACRO - 1M - BEARISH"
-    "BTC MACRO MACD - 1M - BULLISH"
 """
 
 import re
@@ -36,11 +32,11 @@ def parse_webhook(message: str) -> Optional[Dict]:
         Input:  "HYPEUSDT.P, 1D - Buy Signal"
         Output: {"symbol": "HYPEUSDT.P", "timeframe": "1d", "type": "signal", "value": "buy"}
         
-        Input:  "BTC MACRO - 1M - BEARISH"
-        Output: {"symbol": "BTC", "timeframe": "1m", "type": "macro_trend", "value": "bearish"}
+        Input:  "BTC MACRO 1M TREND - BEARISH"
+        Output: {"symbol": "BTC", "type": "macro", "indicator": "trend", "value": "bearish"}
         
-        Input:  "BTC MACRO MACD - 1M - BULLISH"
-        Output: {"symbol": "BTC", "timeframe": "1m", "type": "macro_macd", "value": "bullish"}
+        Input:  "USDT.D MACRO 1M MACD - BULLISH"
+        Output: {"symbol": "USDT.D", "type": "macro", "indicator": "macd", "value": "bullish"}
     """
     
     if not message or not message.strip():
@@ -49,43 +45,27 @@ def parse_webhook(message: str) -> Optional[Dict]:
     
     message = message.strip()
     
-    # Try parsing MACRO MACD format first: "BTC MACRO MACD - 1M - BEARISH"
-    macro_macd_pattern = r"([A-Z0-9\.]+)\s+MACRO\s+MACD\s*-\s*(\d+[WDMH])\s*-\s*(BULLISH|BEARISH)"
-    match = re.match(macro_macd_pattern, message, re.IGNORECASE)
+    # ===== MACRO PATTERN =====
+    # Format: "BTC MACRO 1M TREND - BEARISH" or "USDT.D MACRO 1M MACD - BULLISH"
+    macro_pattern = r"([A-Z0-9\.]+)\s+MACRO\s+1M\s+(TREND|MACD)\s*-\s*(BULLISH|BEARISH)"
+    macro_match = re.match(macro_pattern, message, re.IGNORECASE)
     
-    if match:
-        symbol = match.group(1).upper()
-        timeframe = match.group(2).lower()
-        value = match.group(3).lower()
+    if macro_match:
+        symbol = macro_match.group(1).upper()
+        indicator = macro_match.group(2).lower()  # "trend" or "macd"
+        value = macro_match.group(3).lower()      # "bullish" or "bearish"
         
         result = {
             "symbol": symbol,
-            "timeframe": timeframe,
-            "type": "macro_macd",
+            "type": "macro",
+            "indicator": indicator,
             "value": value
         }
-        logger.info(f"✅ Macro MACD geparst: {result}")
+        logger.info(f"✅ Macro Webhook geparst: {result}")
         return result
     
-    # Try parsing MACRO format: "BTC MACRO - 1M - BEARISH"
-    macro_pattern = r"([A-Z0-9\.]+)\s+MACRO\s*-\s*(\d+[WDMH])\s*-\s*(BULLISH|BEARISH)"
-    match = re.match(macro_pattern, message, re.IGNORECASE)
-    
-    if match:
-        symbol = match.group(1).upper()
-        timeframe = match.group(2).lower()
-        value = match.group(3).lower()
-        
-        result = {
-            "symbol": symbol,
-            "timeframe": timeframe,
-            "type": "macro_trend",
-            "value": value
-        }
-        logger.info(f"✅ Macro Trend geparst: {result}")
-        return result
-    
-    # Original pattern: SYMBOL, TIMEFRAME - VALUE
+    # ===== STANDARD PATTERN =====
+    # Pattern: SYMBOL, TIMEFRAME - VALUE
     # Erfasst: Gruppe 1 = Symbol, Gruppe 2 = Timeframe, Gruppe 3 = Wert
     pattern = r"([A-Z0-9\.]+),\s*(\d+[WDMH])\s*-\s*(.+)"
     match = re.match(pattern, message, re.IGNORECASE)

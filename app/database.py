@@ -56,15 +56,14 @@ class CoinState(Base):
 class MacroState(Base):
     """
     Model für Macro-Indikatoren
-    BTC, USDT.D, TOTAL, TOTAL2, TOTAL3, OTHERS
-    Speichert Monthly Trend und Monthly MACD
+    Speichert monatliche Trend und MACD Werte für Markt-Übersicht
     """
     __tablename__ = "macro_states"
     
-    symbol = Column(String, primary_key=True)           # "BTC", "USDT.D", "TOTAL", etc.
-    display_name = Column(String)                       # Anzeigename
-    monthly_trend = Column(String, default="bearish")   # "bullish" / "bearish"
-    monthly_macd = Column(String, default="bearish")    # "bullish" / "bearish"
+    symbol = Column(String, primary_key=True)           # BTC, USDT.D, TOTAL, TOTAL2, TOTAL3, OTHERS
+    display_name = Column(String)                       # Full display name
+    trend_1m = Column(String, default="bearish")        # "bullish" / "bearish"
+    macd_1m = Column(String, default="bearish")         # "bullish" / "bearish"
     last_updated = Column(DateTime, default=datetime.utcnow)
     created_at = Column(DateTime, default=datetime.utcnow)
     
@@ -145,14 +144,17 @@ def init_db():
                 db.add(coin)
                 logger.info(f"➕ Coin hinzugefügt: {coin_data['display_name']}")
         
-        # Initialize Macro indicators (all bearish by default)
+        db.commit()
+        logger.info(f"✅ {len(initial_coins)} Coins in Datenbank")
+        
+        # Initialize Macro Indicators (all bearish by default)
         initial_macros = [
             {"symbol": "BTC", "display_name": "Bitcoin"},
-            {"symbol": "USDT.D", "display_name": "USDT Dominance"},
-            {"symbol": "TOTAL", "display_name": "Total Crypto"},
-            {"symbol": "TOTAL2", "display_name": "Total2 (ex BTC)"},
-            {"symbol": "TOTAL3", "display_name": "Total3 (ex BTC/ETH)"},
-            {"symbol": "OTHERS", "display_name": "Others (Alts)"},
+            {"symbol": "USDT.D", "display_name": "Tether Dominance"},
+            {"symbol": "TOTAL", "display_name": "Total Market Cap"},
+            {"symbol": "TOTAL2", "display_name": "Total 2 (Altcoins)"},
+            {"symbol": "TOTAL3", "display_name": "Total 3 (Altcoins ex ETH)"},
+            {"symbol": "OTHERS", "display_name": "Others (Small Caps)"},
         ]
         
         for macro_data in initial_macros:
@@ -161,16 +163,16 @@ def init_db():
                 macro = MacroState(
                     symbol=macro_data["symbol"],
                     display_name=macro_data["display_name"],
-                    monthly_trend="bearish",
-                    monthly_macd="bearish",
+                    trend_1m="bearish",
+                    macd_1m="bearish",
                     created_at=now,
                     last_updated=now
                 )
                 db.add(macro)
-                logger.info(f"➕ Macro hinzugefügt: {macro_data['display_name']}")
+                logger.info(f"📊 Macro hinzugefügt: {macro_data['display_name']}")
         
         db.commit()
-        logger.info(f"✅ {len(initial_coins)} Coins + {len(initial_macros)} Macros in Datenbank")
+        logger.info(f"✅ {len(initial_macros)} Macro-Indikatoren in Datenbank")
         
     except Exception as e:
         logger.error(f"❌ Database init error: {e}")

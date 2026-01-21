@@ -28,8 +28,7 @@ async def receive_webhook(request: Request, db: Session = Depends(get_db)):
     Unterstützte Formate:
         - Trends:  "HYPEUSDT.P, 1W - DOWNTREND"
         - Signale: "HYPEUSDT.P, 1D - Buy Signal"
-        - Macro:   "BTC MACRO - 1M - BEARISH"
-        - Macro MACD: "BTC MACRO MACD - 1M - BULLISH"
+        - Macro:   "BTC MACRO 1M TREND - BEARISH"
     
     Returns:
         JSON mit Status und Nachricht
@@ -51,75 +50,93 @@ async def receive_webhook(request: Request, db: Session = Depends(get_db)):
             detail=f"Invalid webhook format: {message}"
         )
     
+    # Update basierend auf Typ
     update_msg = ""
     
-    # Handle Macro messages
-    if parsed["type"] in ["macro_trend", "macro_macd"]:
+    if parsed["type"] == "macro":
+        # Macro Update (BTC, USDT.D, TOTAL, etc.)
         macro = db.query(MacroState).filter_by(symbol=parsed["symbol"]).first()
         
         if not macro:
-            # Auto-create for new macro symbols
+            # Auto-Create for new macro symbols
             macro = MacroState(
                 symbol=parsed["symbol"],
                 display_name=parsed["symbol"],
-                monthly_trend="bearish",
-                monthly_macd="bearish",
                 created_at=datetime.utcnow()
             )
             db.add(macro)
-            logger.info(f"➕ Neuer Macro erstellt: {parsed['symbol']}")
+            logger.info(f"📊 Neuer Macro erstellt: {parsed['symbol']}")
         
-        if parsed["type"] == "macro_trend":
-            macro.monthly_trend = parsed["value"]
-            update_msg = f"monthly_trend = {parsed['value']}"
-        else:  # macro_macd
-            macro.monthly_macd = parsed["value"]
-            update_msg = f"monthly_macd = {parsed['value']}"
+        # Update based on indicator type
+        if parsed["indicator"] == "trend":
+            macro.trend_1m = parsed["value"]
+            update_msg = f"trend_1m = {parsed['value']}"
+        elif parsed["indicator"] == "macd":
+            macro.macd_1m = parsed["value"]
+            update_msg = f"macd_1m = {parsed['value']}"
         
         macro.last_updated = datetime.utcnow()
-    
-    else:
-        # Handle Coin messages (original logic)
-        coin = db.query(CoinState).filter_by(symbol=parsed["symbol"]).first()
         
-        if not coin:
-            # Auto-Create für neue Coins
-            display_name = parsed["symbol"].replace("USDT.P", "").replace("USDT", "")
-            coin = CoinState(
-                symbol=parsed["symbol"],
-                display_name=display_name,
-                created_at=datetime.utcnow()
-            )
-            db.add(coin)
-            logger.info(f"➕ Neuer Coin erstellt: {display_name}")
-        
-        # Update basierend auf Typ
-        if parsed["type"] == "trend":
-            # Trend Update (1w, 3d, 1d, etc.)
-            timeframe = parsed["timeframe"]
+        try:
+            db.commit()
+            logger.info(f"✅ Macro {parsed['symbol']} updated: {update_msg}")
             
-            # Mapping von Timeframe zu Spalte
-            if timeframe in ["1w", "7d"]:
-                coin.trend_1w = parsed["value"]
-                update_msg = f"trend_1w = {parsed['value']}"
-            elif timeframe in ["3d"]:
-                coin.trend_3d = parsed["value"]
-                update_msg = f"trend_3d = {parsed['value']}"
-            elif timeframe in ["1d", "24h"]:
-                coin.trend_1d = parsed["value"]
-                update_msg = f"trend_1d = {parsed['value']}"
-            else:
-                # Für andere Timeframes: Speichere in 1d als Default
-                coin.trend_1d = parsed["value"]
-                update_msg = f"trend_1d = {parsed['value']} (from {timeframe})"
-                
-        elif parsed["type"] == "signal":
-            # Signal Update (Buy/Sell)
-            coin.last_signal_type = parsed["value"]
-            coin.last_signal_time = datetime.utcnow()
-            update_msg = f"signal = {parsed['value']}"
+            return {
+                "status": "success",
+                "message": f"Macro {parsed['symbol']} updated: {update_msg}",
+                "data": {
+                    "symbol": parsed["symbol"],
+                    "type": parsed["type"],
+                    "indicator": parsed["indicator"],
+                    "value": parsed["value"]
+                }
+            }
+            
+        except Exception as e:
+            db.rollback()
+            logger.error(f"❌ Database error: {e}")
+            raise HTTPException(status_code=500, detail=str(e))
+    
+    # Hole oder erstelle Coin für Standard-Webhooks
+    coin = db.query(CoinState).filter_by(symbol=parsed["symbol"]).first()
+    
+    if not coin:
+        # Auto-Create für neue Coins
+        display_name = parsed["symbol"].replace("USDT.P", "").replace("USDT", "")
+        coin = CoinState(
+            symbol=parsed["symbol"],
+            display_name=display_name,
+            created_at=datetime.utcnow()
+        )
+        db.add(coin)
+        logger.info(f"➕ Neuer Coin erstellt: {display_name}")
+    
+    if parsed["type"] == "trend":
+        # Trend Update (1w, 3d, 1d, etc.)
+        timeframe = parsed["timeframe"]
         
-        coin.last_updated = datetime.utcnow()
+        # Mapping von Timeframe zu Spalte
+        if timeframe in ["1w", "7d"]:
+            coin.trend_1w = parsed["value"]
+            update_msg = f"trend_1w = {parsed['value']}"
+        elif timeframe in ["3d"]:
+            coin.trend_3d = parsed["value"]
+            update_msg = f"trend_3d = {parsed['value']}"
+        elif timeframe in ["1d", "24h"]:
+            coin.trend_1d = parsed["value"]
+            update_msg = f"trend_1d = {parsed['value']}"
+        else:
+            # Für andere Timeframes: Speichere in 1d als Default
+            coin.trend_1d = parsed["value"]
+            update_msg = f"trend_1d = {parsed['value']} (from {timeframe})"
+            
+    elif parsed["type"] == "signal":
+        # Signal Update (Buy/Sell)
+        coin.last_signal_type = parsed["value"]
+        coin.last_signal_time = datetime.utcnow()
+        update_msg = f"signal = {parsed['value']}"
+    
+    coin.last_updated = datetime.utcnow()
     
     try:
         db.commit()
@@ -132,7 +149,7 @@ async def receive_webhook(request: Request, db: Session = Depends(get_db)):
                 "symbol": parsed["symbol"],
                 "type": parsed["type"],
                 "value": parsed["value"],
-                "timeframe": parsed["timeframe"]
+                "timeframe": parsed.get("timeframe")
             }
         }
         
@@ -191,50 +208,43 @@ def get_coins(db: Session = Depends(get_db)):
 @router.get("/api/macro")
 def get_macro(db: Session = Depends(get_db)):
     """
-    Liefert alle Macro-Indikatoren.
+    Liefert alle Macro-Indikatoren mit aktuellem Status.
     
     Returns:
-        JSON mit Liste aller Macro-Indikatoren
+        JSON mit Liste aller Macro-Indikatoren (BTC, USDT.D, TOTAL, etc.)
     """
     
-    # Define order for display
+    # Define fixed order for display
     order = ["BTC", "USDT.D", "TOTAL", "TOTAL2", "TOTAL3", "OTHERS"]
-    
     macros = db.query(MacroState).all()
     now = datetime.utcnow()
     
     def minutes_ago(dt: Optional[datetime]) -> Optional[int]:
+        """Berechnet Minuten seit einem Timestamp"""
         if not dt:
             return None
         delta = now - dt
         return max(0, int(delta.total_seconds() / 60))
     
-    # Create result dict for ordering
-    result_dict = {}
-    for macro in macros:
-        result_dict[macro.symbol] = {
-            "symbol": macro.symbol,
-            "display_name": macro.display_name,
-            "monthly_trend": macro.monthly_trend,
-            "monthly_macd": macro.monthly_macd,
-            "last_updated": macro.last_updated.isoformat() + "Z" if macro.last_updated else None,
-            "last_updated_minutes_ago": minutes_ago(macro.last_updated)
-        }
+    # Create lookup dict
+    macro_dict = {m.symbol: m for m in macros}
     
-    # Return in defined order, with any extras at end
     result = []
     for symbol in order:
-        if symbol in result_dict:
-            result.append(result_dict[symbol])
-    
-    # Add any symbols not in the predefined order
-    for symbol, data in result_dict.items():
-        if symbol not in order:
-            result.append(data)
+        macro = macro_dict.get(symbol)
+        if macro:
+            result.append({
+                "symbol": macro.symbol,
+                "display_name": macro.display_name,
+                "trend_1m": macro.trend_1m,
+                "macd_1m": macro.macd_1m,
+                "last_updated": macro.last_updated.isoformat() + "Z" if macro.last_updated else None,
+                "last_updated_minutes_ago": minutes_ago(macro.last_updated)
+            })
     
     return {
-        "macros": result,
-        "total_macros": len(result),
+        "macro": result,
+        "total_indicators": len(result),
         "timestamp": now.isoformat() + "Z"
     }
 
@@ -249,8 +259,7 @@ def health_check(db: Session = Depends(get_db)):
     """
     
     try:
-        coin_count = db.query(CoinState).count()
-        macro_count = db.query(MacroState).count()
+        count = db.query(CoinState).count()
         
         # Finde letztes Update
         latest = db.query(CoinState).order_by(CoinState.last_updated.desc()).first()
@@ -259,8 +268,7 @@ def health_check(db: Session = Depends(get_db)):
         return {
             "status": "healthy",
             "database": "connected",
-            "coins_tracked": coin_count,
-            "macros_tracked": macro_count,
+            "coins_tracked": count,
             "last_webhook": last_webhook,
             "version": "2.0.0"
         }
