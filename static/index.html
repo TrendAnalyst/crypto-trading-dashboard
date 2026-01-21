@@ -1,501 +1,333 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="dark">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SGNL • Pro</title>
-    <meta name="description" content="Institutional-grade crypto signal intelligence">
+    <title>Crypto Trading Dashboard</title>
+    <meta name="description" content="Real-time cryptocurrency trading signals dashboard">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'system-ui', 'sans-serif'] },
+                    colors: {
+                        gray: {
+                            950: '#07070a', 900: '#0c0c12', 850: '#111118',
+                            800: '#18181f', 750: '#1e1e27', 700: '#26262f'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
     <style>
-        :root {
-            --bg-body: #000000;
-            --bg-surface: #0A0A0A;
-            --bg-surface-hover: #121212;
-            --border-subtle: rgba(255, 255, 255, 0.08);
-            --border-focus: rgba(255, 255, 255, 0.16);
-            
-            --text-primary: #EDEDED;
-            --text-secondary: #888888;
-            --text-tertiary: #444444;
-            
-            --accent-primary: #FFFFFF;
-            --semantic-green: #27D669; /* Vivid, OLED-optimized green */
-            --semantic-red: #FF3B30;   /* SF System Red */
-            --semantic-green-dim: rgba(39, 214, 105, 0.1);
-            --semantic-red-dim: rgba(255, 59, 48, 0.1);
-            
-            --font-sans: 'Inter', -apple-system, sans-serif;
-            --font-mono: 'JetBrains Mono', monospace;
-            
-            --ease-apple: cubic-bezier(0.2, 0.8, 0.2, 1);
-        }
-
-        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-font-smoothing: antialiased; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes pulse-ring { 0% { transform: scale(0.8); opacity: 1; } 100% { transform: scale(2); opacity: 0; } }
+        @keyframes glow { 0%,100% { box-shadow: 0 0 15px rgba(59,130,246,0.15); } 50% { box-shadow: 0 0 25px rgba(59,130,246,0.25); } }
         
-        body {
-            background-color: var(--bg-body);
-            color: var(--text-primary);
-            font-family: var(--font-sans);
-            font-size: 13px;
-            letter-spacing: -0.01em;
-            overflow-y: scroll;
-        }
-
-        /* Utilities */
-        .mono { font-family: var(--font-mono); letter-spacing: -0.02em; }
-        .fade-in { animation: fadeIn 0.6s var(--ease-apple) forwards; opacity: 0; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
-
-        /* Structure */
-        .app-shell {
-            max-width: 1000px;
-            margin: 0 auto;
-            padding: 40px 24px 80px;
-        }
-
-        /* Header */
-        .workspace-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-end;
-            margin-bottom: 48px;
-            border-bottom: 1px solid var(--border-subtle);
-            padding-bottom: 24px;
-        }
-
-        .brand-lockup h1 {
-            font-size: 15px;
-            font-weight: 600;
-            letter-spacing: -0.02em;
-            color: var(--text-primary);
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
+        .glass { background: linear-gradient(135deg, rgba(18,18,26,0.9) 0%, rgba(12,12,18,0.95) 100%); backdrop-filter: blur(20px); }
+        .glass-subtle { background: rgba(18,18,26,0.6); backdrop-filter: blur(10px); }
+        .coin-card { animation: fadeIn 0.4s ease forwards; opacity: 0; }
+        .coin-card:hover { transform: translateY(-2px); }
+        .recent-update { animation: glow 2s ease-in-out infinite; border-color: rgba(59,130,246,0.4) !important; }
+        .live-dot::before { content: ''; position: absolute; inset: -3px; border-radius: 50%; background: rgba(34,197,94,0.4); animation: pulse-ring 2s cubic-bezier(0.4,0,0.6,1) infinite; }
         
-        .brand-indicator {
-            width: 6px;
-            height: 6px;
-            background: var(--semantic-green);
-            border-radius: 50%;
-            box-shadow: 0 0 12px var(--semantic-green);
-        }
-
-        .brand-subtitle {
-            margin-top: 6px;
-            color: var(--text-secondary);
-            font-size: 13px;
-        }
-
-        .controls-cluster {
-            display: flex;
-            gap: 24px;
-            align-items: center;
-        }
-
-        /* Filter Tabs */
-        .filter-group {
-            display: flex;
-            background: var(--bg-surface);
-            padding: 3px;
-            border-radius: 10px;
-            border: 1px solid var(--border-subtle);
-        }
-
-        .filter-item {
-            appearance: none;
-            background: none;
-            border: none;
-            color: var(--text-secondary);
-            font-family: var(--font-sans);
-            font-size: 12px;
-            font-weight: 500;
-            padding: 6px 16px;
-            border-radius: 7px;
-            cursor: pointer;
-            transition: all 0.2s var(--ease-apple);
-        }
-
-        .filter-item:hover { color: var(--text-primary); }
-        .filter-item.active {
-            background: var(--bg-surface-hover);
-            color: var(--text-primary);
-            box-shadow: 0 1px 2px rgba(0,0,0,0.2);
-        }
-
-        /* Data Grid */
-        .data-grid {
-            width: 100%;
-            border-collapse: separate;
-            border-spacing: 0;
-        }
-
-        .data-grid th {
-            text-align: left;
-            font-size: 11px;
-            color: var(--text-tertiary);
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            font-weight: 600;
-            padding: 0 0 16px 0;
-            cursor: default;
-        }
-
-        .data-grid th.sortable { cursor: pointer; transition: color 0.2s; }
-        .data-grid th.sortable:hover { color: var(--text-secondary); }
-        .data-grid th.text-right { text-align: right; }
-        .data-grid th.text-center { text-align: center; }
-
-        .row-item td {
-            padding: 18px 0;
-            border-bottom: 1px solid var(--border-subtle);
-            vertical-align: middle;
-            transition: background 0.1s;
-        }
-
-        .row-item:last-child td { border-bottom: none; }
-        .row-item:hover td { background: linear-gradient(90deg, transparent, rgba(255,255,255,0.01) 50%, transparent); }
-
-        /* Asset Cell */
-        .asset-cell {
-            display: flex;
-            align-items: center;
-            gap: 16px;
-        }
-
-        .asset-monogram {
-            width: 32px;
-            height: 32px;
-            background: var(--bg-surface);
-            border: 1px solid var(--border-subtle);
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 600;
-            font-size: 11px;
-            color: var(--text-secondary);
-        }
-
-        .asset-info { display: flex; flex-direction: column; gap: 2px; }
-        .asset-symbol { font-weight: 600; color: var(--text-primary); font-size: 13px; }
-        .asset-name { color: var(--text-tertiary); font-size: 11px; }
-
-        /* Score Cell */
-        .score-visual {
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-            width: 100%;
-            max-width: 80px;
-            margin: 0 auto;
-        }
-
-        .score-number {
-             text-align: right;
-             font-size: 12px;
-             font-weight: 600;
-             font-variant-numeric: tabular-nums;
-        }
-        .score-number.pos { color: var(--semantic-green); }
-        .score-number.neg { color: var(--semantic-red); }
-        .score-number.neu { color: var(--text-tertiary); }
-
-        .score-track {
-            height: 2px;
-            background: var(--bg-surface-hover);
-            border-radius: 1px;
-            width: 100%;
-            overflow: hidden;
-            display: flex;
-        }
+        .trend-up { background: rgba(34,197,94,0.1); border: 1px solid rgba(34,197,94,0.25); }
+        .trend-down { background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.25); }
+        .trend-neutral { background: rgba(75,85,99,0.1); border: 1px solid rgba(75,85,99,0.2); }
         
-        /* Flex based signal bar logic */
-        /* Center pivot */
-        .score-track::after { 
-            content: ''; width: 1px; height: 100%; background: var(--bg-body); 
-            position: absolute; left: 50%; transform: translateX(-50%);
-        }
-
-        .score-bar { height: 100%; transition: width 0.4s var(--ease-apple); }
-        .score-bar.pos { background: var(--semantic-green); margin-left: auto; } /* Right aligned for pos? No, requires different logic. Using simpler absolute bar for MVP cleanliness. */
+        .signal-buy { background: rgba(34,197,94,0.12); border: 1px solid rgba(34,197,94,0.3); }
+        .signal-sell { background: rgba(239,68,68,0.12); border: 1px solid rgba(239,68,68,0.3); }
         
-        /* Simpler Visual Bar */
-        .visual-bar-wrap {
-            position: relative; height: 2px; background: var(--bg-surface); width: 100%; border-radius: 2px;
-        }
-        .visual-bar-fill {
-            position: absolute; height: 100%; top: 0;
-            transition: all 0.5s var(--ease-apple);
-        }
-        /* If positive: left: 50%, width: X%. If negative: right: 50%, width: X% */
-
-        /* Trend Pills */
-        .ui-trend {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            height: 24px;
-            padding: 0 10px;
-            border-radius: 6px;
-            font-size: 11px;
-            font-weight: 500;
-            letter-spacing: 0.01em;
-            background: var(--bg-surface);
-            color: var(--text-tertiary);
-            border: 1px solid transparent;
-        }
-
-        .ui-trend.up {
-            background: var(--semantic-green-dim);
-            color: var(--semantic-green);
-            border-color: rgba(39, 214, 105, 0.15);
-        }
-        
-        .ui-trend.down {
-            background: var(--semantic-red-dim);
-            color: var(--semantic-red);
-            border-color: rgba(255, 59, 48, 0.15);
-        }
-
-        /* Signal Tag */
-        .ui-signal {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            font-family: var(--font-mono);
-            font-size: 11px;
-            color: var(--text-secondary);
-        }
-
-        .signal-dot {
-            width: 6px;
-            height: 6px;
-            border-radius: 1px; /* Square dot - "Pixel" aesthetic currently trendy */
-            background: var(--text-tertiary);
-        }
-        .ui-signal.buy .signal-dot { background: var(--semantic-green); box-shadow: 0 0 8px var(--semantic-green-dim); }
-        .ui-signal.sell .signal-dot { background: var(--semantic-red); box-shadow: 0 0 8px var(--semantic-red-dim); }
-        
-        .signal-ago { color: var(--text-tertiary); margin-left: 6px; font-size: 10px; }
-
-        /* Footer */
-        .system-status {
-            margin-top: 60px;
-            display: flex;
-            justify-content: space-between;
-            color: var(--text-tertiary);
-            font-size: 11px;
-            border-top: 1px solid var(--border-subtle);
-            padding-top: 24px;
-        }
-
-        /* Loading / States */
-        .state-empty { padding: 80px 0; text-align: center; color: var(--text-secondary); }
-        .spin { animation: rotation 1s infinite linear; }
-        @keyframes rotation { from { transform: rotate(0deg); } to { transform: rotate(359deg); } }
-
+        .tab-active { background: linear-gradient(135deg, #3b82f6, #6366f1); color: white; }
+        .verdict-bullish { background: rgba(34,197,94,0.1); border: 1px solid rgba(34,197,94,0.3); }
+        .verdict-bearish { background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.3); }
     </style>
 </head>
-<body>
 
-    <div class="app-shell">
-        
-        <header class="workspace-header">
-            <div class="brand-lockup">
-                <h1><div class="brand-indicator"></div> SGNL</h1>
-                <div class="brand-subtitle">Pro.v1 // Institutional Feeds</div>
-            </div>
+<body class="bg-gray-950 text-gray-100 min-h-screen font-sans antialiased">
+    <div class="container mx-auto px-4 sm:px-6 py-8 max-w-7xl">
 
-            <div class="controls-cluster">
-                <div class="filter-group">
-                    <button class="filter-item active" onclick="setSort('score', 'desc', this)">Strongest</button>
-                    <button class="filter-item" onclick="setSort('score', 'asc', this)">Weakest</button>
-                    <button class="filter-item" onclick="setSort('name', 'asc', this)">Index</button>
+        <!-- Header -->
+        <header class="mb-8">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center">
+                        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
+                        </svg>
+                    </div>
+                    <div>
+                        <h1 class="text-xl font-bold text-white">Crypto Trading</h1>
+                        <p class="text-xs text-gray-500">TradingView Signals</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-3">
+                    <div class="glass-subtle rounded-lg px-3 py-2 border border-gray-800/50 flex items-center gap-2">
+                        <span id="coin-count" class="text-sm font-bold text-white">-</span>
+                        <span class="text-xs text-gray-500">Assets</span>
+                    </div>
+                    <div class="glass-subtle rounded-lg px-3 py-2 border border-gray-800/50 flex items-center gap-2">
+                        <div class="live-dot relative">
+                            <div class="w-2 h-2 bg-green-500 rounded-full relative z-10"></div>
+                        </div>
+                        <span class="text-xs font-semibold text-green-400">Live</span>
+                        <span id="countdown" class="text-xs text-gray-500 font-mono">3s</span>
+                    </div>
                 </div>
             </div>
         </header>
 
-        <main>
-            <div id="loading" class="state-empty">
-                <svg class="spin" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
-                </svg>
+        <!-- Tabs -->
+        <div class="mb-6">
+            <div class="glass-subtle inline-flex rounded-lg border border-gray-800/50 p-1">
+                <button id="tab-assets" onclick="switchTab('assets')" class="tab-active px-4 py-2 rounded-md text-sm font-semibold transition-all">Assets</button>
+                <button id="tab-macro" onclick="switchTab('macro')" class="px-4 py-2 rounded-md text-sm font-semibold text-gray-400 hover:text-white transition-all">Macro</button>
             </div>
+        </div>
 
-            <div id="content" class="fade-in" style="display: none;">
-                <table class="data-grid">
-                    <thead>
-                        <tr>
-                            <th style="width: 25%">Instrument</th>
-                            <th style="width: 15%" class="text-center">Trend Score</th>
-                            <th style="width: 10%" class="text-center">1W</th>
-                            <th style="width: 10%" class="text-center">3D</th>
-                            <th style="width: 10%" class="text-center">1D</th>
-                            <th style="width: 20%">Latest Signal</th>
-                            <th style="width: 10%" class="text-right">Upd.</th>
-                        </tr>
-                    </thead>
-                    <tbody id="table-body">
-                        <!-- Rows injected via JS -->
-                    </tbody>
-                </table>
+        <!-- Market Verdict (Macro Tab) -->
+        <div id="verdict-panel" class="hidden mb-6">
+            <div id="verdict-card" class="glass rounded-xl p-5 border border-gray-800/50">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                    <div class="flex items-center gap-4">
+                        <div id="verdict-icon" class="w-12 h-12 rounded-lg flex items-center justify-center text-2xl font-bold"></div>
+                        <div>
+                            <p class="text-xs text-gray-500 uppercase tracking-wider mb-1">Market Verdict</p>
+                            <p id="verdict-text" class="text-xl font-bold"></p>
+                        </div>
+                    </div>
+                    <div class="flex gap-6">
+                        <div class="text-center">
+                            <p class="text-xs text-gray-500 mb-1">Bullish</p>
+                            <p id="bullish-count" class="text-lg font-bold text-green-400">0</p>
+                        </div>
+                        <div class="text-center">
+                            <p class="text-xs text-gray-500 mb-1">Bearish</p>
+                            <p id="bearish-count" class="text-lg font-bold text-red-400">0</p>
+                        </div>
+                        <div class="text-center">
+                            <p class="text-xs text-gray-500 mb-1">Confidence</p>
+                            <p id="confidence" class="text-lg font-bold text-blue-400">0%</p>
+                        </div>
+                    </div>
+                </div>
             </div>
+        </div>
 
-            <div class="system-status">
-                <div class="mono">SYNC_ID: <span id="sync-id">--</span></div>
-                <div>SECURE CONNECTION • <span id="item-count">0</span> STREAMS ACTIVE</div>
+        <!-- Loading -->
+        <div id="loading" class="flex flex-col items-center justify-center py-20">
+            <div class="relative">
+                <div class="w-12 h-12 rounded-full border-4 border-gray-800"></div>
+                <div class="w-12 h-12 rounded-full border-4 border-blue-500 border-t-transparent animate-spin absolute inset-0"></div>
             </div>
-        </main>
+            <p class="mt-4 text-gray-500 text-sm">Loading data...</p>
+        </div>
 
+        <!-- Assets Grid -->
+        <div id="assets-grid" class="hidden grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"></div>
+
+        <!-- Macro Grid -->
+        <div id="macro-grid" class="hidden grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+
+        <!-- Footer -->
+        <footer class="mt-10 pt-6 border-t border-gray-800/50">
+            <div class="flex justify-between items-center text-xs text-gray-600">
+                <p>Powered by TradingView Webhooks</p>
+                <p>Last sync: <span id="last-update" class="text-gray-400 font-mono">—</span></p>
+            </div>
+        </footer>
     </div>
 
     <script>
-        // State
-        let store = {
-            data: [],
-            sort: { field: 'score', dir: 'desc' }
-        };
+        let currentTab = 'assets';
+        let coinsData = [];
+        let macrosData = [];
+        let countdown = 3;
 
-        const REFRESH_Rate = 30000;
-
-        // Logic
-        function calcScore(t) {
-            let s = 0;
-            // 10-point scale for cleaner math
-            if (t['1w'] === 'uptrend') s += 6; else if (t['1w'] === 'downtrend') s -= 6;
-            if (t['3d'] === 'uptrend') s += 3; else if (t['3d'] === 'downtrend') s -= 3;
-            if (t['1d'] === 'uptrend') s += 1; else if (t['1d'] === 'downtrend') s -= 1;
-            return s;
+        // Tab switching
+        function switchTab(tab) {
+            currentTab = tab;
+            document.getElementById('tab-assets').className = tab === 'assets' ? 'tab-active px-4 py-2 rounded-md text-sm font-semibold transition-all' : 'px-4 py-2 rounded-md text-sm font-semibold text-gray-400 hover:text-white transition-all';
+            document.getElementById('tab-macro').className = tab === 'macro' ? 'tab-active px-4 py-2 rounded-md text-sm font-semibold transition-all' : 'px-4 py-2 rounded-md text-sm font-semibold text-gray-400 hover:text-white transition-all';
+            
+            document.getElementById('assets-grid').classList.toggle('hidden', tab !== 'assets');
+            document.getElementById('macro-grid').classList.toggle('hidden', tab !== 'macro');
+            document.getElementById('verdict-panel').classList.toggle('hidden', tab !== 'macro');
         }
 
-        async function init() {
-            await load();
-            setInterval(load, REFRESH_Rate);
-            document.addEventListener('visibilitychange', () => {
-                if(document.visibilityState === 'visible') load();
-            });
-        }
-
-        async function load() {
+        // Fetch data
+        async function fetchData() {
             try {
-                const req = await fetch('/api/coins');
-                const res = await req.json();
+                const [coinsRes, macrosRes] = await Promise.all([
+                    fetch('/api/coins'),
+                    fetch('/api/macro')
+                ]);
                 
-                store.data = res.coins.map(c => ({
-                    ...c,
-                    score: calcScore(c.trends)
-                }));
+                if (coinsRes.ok) {
+                    const data = await coinsRes.json();
+                    coinsData = data.coins;
+                    document.getElementById('coin-count').textContent = data.total_coins;
+                }
                 
-                document.getElementById('loading').style.display = 'none';
-                document.getElementById('content').style.display = 'block';
-                document.getElementById('item-count').innerText = res.total_coins;
-                document.getElementById('sync-id').innerText = Math.floor(Date.now() / 1000).toString(16).toUpperCase();
+                if (macrosRes.ok) {
+                    const data = await macrosRes.json();
+                    macrosData = data.macros;
+                }
                 
-                render();
-            } catch(e) {
+                renderAssets();
+                renderMacro();
+                updateVerdict();
+                
+                document.getElementById('loading').classList.add('hidden');
+                if (currentTab === 'assets') document.getElementById('assets-grid').classList.remove('hidden');
+                else document.getElementById('macro-grid').classList.remove('hidden');
+                
+                document.getElementById('last-update').textContent = new Date().toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+                countdown = 3;
+            } catch (e) {
                 console.error(e);
             }
         }
 
-        function render() {
-            const tbody = document.getElementById('table-body');
-            
-            // Sort
-            const sorted = [...store.data].sort((a,b) => {
-                if (store.sort.field === 'score') {
-                    return store.sort.dir === 'desc' ? b.score - a.score : a.score - b.score;
-                }
-                return a.display_name.localeCompare(b.display_name);
-            });
+        // Calculate trend score
+        function calcScore(trends) {
+            let s = 0;
+            if (trends['1w'] === 'uptrend') s += 3; else if (trends['1w'] === 'downtrend') s -= 3;
+            if (trends['3d'] === 'uptrend') s += 2; else if (trends['3d'] === 'downtrend') s -= 2;
+            if (trends['1d'] === 'uptrend') s += 1; else if (trends['1d'] === 'downtrend') s -= 1;
+            return s;
+        }
 
-            // Diffing - brute force replace is fine for <100 items for simplicity & stability
-            tbody.innerHTML = sorted.map(row => {
-                const scoreRes = getScoreVisuals(row.score);
-                const signalRes = getSignalVisuals(row.last_signal);
+        // Render assets (sorted by score)
+        function renderAssets() {
+            const sorted = [...coinsData].sort((a, b) => calcScore(b.trends) - calcScore(a.trends));
+            const grid = document.getElementById('assets-grid');
+            
+            grid.innerHTML = sorted.map((coin, i) => {
+                const score = calcScore(coin.trends);
+                const recent = coin.last_updated_minutes_ago !== null && coin.last_updated_minutes_ago < 1;
+                const scoreClass = score >= 3 ? 'text-green-400 bg-green-500/10' : score <= -3 ? 'text-red-400 bg-red-500/10' : 'text-gray-400 bg-gray-500/10';
+                const scoreIcon = score >= 3 ? '↗' : score <= -3 ? '↘' : '→';
                 
                 return `
-                <tr class="row-item">
-                    <td>
-                        <div class="asset-cell">
-                            <div class="asset-monogram mono">${row.display_name.substring(0,3).toUpperCase()}</div>
-                            <div class="asset-info">
-                                <span class="asset-symbol">${row.display_name}</span>
-                                <span class="asset-name mono">${row.symbol}</span>
+                <div class="coin-card glass rounded-xl p-4 border border-gray-800/50 ${recent ? 'recent-update' : ''} transition-all" style="animation-delay: ${i * 0.05}s">
+                    <div class="flex items-center justify-between mb-4 pb-3 border-b border-gray-800/40">
+                        <div class="flex items-center gap-3">
+                            <div class="w-9 h-9 rounded-lg bg-gradient-to-br from-blue-500/20 to-indigo-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400 font-bold text-xs">${coin.display_name.substring(0,2)}</div>
+                            <div>
+                                <h3 class="font-bold text-white text-sm">${coin.display_name}</h3>
+                                <p class="text-xs text-gray-500 font-mono">${coin.symbol}</p>
                             </div>
                         </div>
-                    </td>
-                    <td>
-                        <div class="score-visual">
-                            <div class="visual-bar-wrap">
-                                <div class="visual-bar-fill ${scoreRes.cls}" style="${scoreRes.style}"></div>
-                            </div>
-                            <div class="score-number ${scoreRes.textCls}">${scoreRes.prefix}${row.score}</div>
-                        </div>
-                    </td>
-                    <td class="text-center">${getTrendPill(row.trends['1w'])}</td>
-                    <td class="text-center">${getTrendPill(row.trends['3d'])}</td>
-                    <td class="text-center">${getTrendPill(row.trends['1d'])}</td>
-                    <td>${signalRes}</td>
-                    <td class="text-right mono" style="color: var(--text-tertiary); font-size: 11px;">
-                        ${formatTime(row.last_updated_minutes_ago)}
-                    </td>
-                </tr>
-                `;
+                        <div class="w-8 h-8 rounded-lg ${scoreClass} flex items-center justify-center text-lg font-bold">${scoreIcon}</div>
+                    </div>
+                    <div class="space-y-1.5 mb-4">
+                        ${renderTrend('1W', coin.trends['1w'])}
+                        ${renderTrend('3D', coin.trends['3d'])}
+                        ${renderTrend('1D', coin.trends['1d'])}
+                    </div>
+                    ${renderSignal(coin.last_signal)}
+                    <div class="mt-4 pt-3 border-t border-gray-800/40 flex justify-between items-center text-xs">
+                        <span class="text-gray-500">Updated</span>
+                        <span class="${recent ? 'text-blue-400' : 'text-gray-400'}">${formatTime(coin.last_updated_minutes_ago)}</span>
+                    </div>
+                </div>`;
             }).join('');
         }
 
-        // Visual Helpers
-        function getScoreVisuals(score) {
-            const max = 10;
-            const pct = Math.min((Math.abs(score) / max) * 100, 100);
+        function renderTrend(tf, trend) {
+            if (!trend) return `<div class="trend-neutral flex justify-between items-center py-1.5 px-3 rounded-lg"><span class="text-xs font-bold text-gray-500">${tf}</span><span class="text-gray-600 text-sm">—</span></div>`;
+            const up = trend === 'uptrend';
+            return `<div class="${up ? 'trend-up' : 'trend-down'} flex justify-between items-center py-1.5 px-3 rounded-lg"><span class="text-xs font-bold text-gray-400">${tf}</span><span class="${up ? 'text-green-400' : 'text-red-400'} font-bold text-sm flex items-center gap-1"><span class="text-[10px]">${up ? '▲' : '▼'}</span>${up ? 'UP' : 'DOWN'}</span></div>`;
+        }
+
+        function renderSignal(sig) {
+            if (!sig || !sig.type) return `<div class="py-3 px-4 bg-gray-800/30 rounded-lg text-center border border-gray-800/50"><span class="text-gray-500 text-sm">Awaiting signal...</span></div>`;
+            const buy = sig.type === 'buy';
+            return `<div class="${buy ? 'signal-buy' : 'signal-sell'} rounded-lg py-3 px-4"><div class="flex items-center gap-2"><span class="text-xl">${buy ? '💎' : '🔻'}</span><div><span class="${buy ? 'text-green-400' : 'text-red-400'} font-bold text-sm">${buy ? 'BUY' : 'SELL'} SIGNAL</span><p class="text-xs text-gray-400">${formatTime(sig.minutes_ago)}</p></div></div></div>`;
+        }
+
+        // Render macro
+        function renderMacro() {
+            const grid = document.getElementById('macro-grid');
+            const icons = { 'BTC': '₿', 'USDT.D': '$', 'TOTAL': 'Σ', 'TOTAL2': 'Σ²', 'TOTAL3': 'Σ³', 'OTHERS': '◎' };
             
-            if (score > 0) {
-                return { cls: 'pos', textCls: 'pos', style: `left: 50%; width: ${pct/2}%`, prefix: '+' };
-            } else if (score < 0) {
-                return { cls: 'neg', textCls: 'neg', style: `right: 50%; width: ${pct/2}%`, prefix: '' };
-            }
-            return { cls: '', textCls: 'neu', style: 'width: 0', prefix: '' };
-        }
-
-        function getTrendPill(status) {
-            if (status === 'uptrend') return `<span class="ui-trend up">BULL</span>`;
-            if (status === 'downtrend') return `<span class="ui-trend down">BEAR</span>`;
-            return `<span class="ui-trend mono">-</span>`;
-        }
-
-        function getSignalVisuals(sig) {
-            if (!sig || !sig.type) return `<div class="ui-signal"><div class="signal-dot" style="background: var(--bg-surface-hover)"></div><span style="opacity:0.3">NO SIGNAL</span></div>`;
-            return `
-                <div class="ui-signal ${sig.type}">
-                    <div class="signal-dot"></div>
-                    <span>${sig.type.toUpperCase()}</span>
-                    <span class="signal-ago">${formatTime(sig.minutes_ago)}</span>
+            grid.innerHTML = macrosData.map((m, i) => `
+                <div class="coin-card glass rounded-xl p-4 border border-gray-800/50 transition-all" style="animation-delay: ${i * 0.05}s">
+                    <div class="flex items-center gap-3 mb-4 pb-3 border-b border-gray-800/40">
+                        <div class="w-10 h-10 rounded-lg bg-gradient-to-br from-purple-500/20 to-pink-500/10 border border-purple-500/20 flex items-center justify-center text-purple-400 font-bold text-lg">${icons[m.symbol] || '●'}</div>
+                        <div>
+                            <h3 class="font-bold text-white">${m.display_name}</h3>
+                            <p class="text-xs text-gray-500">${m.symbol}</p>
+                        </div>
+                    </div>
+                    <div class="space-y-2">
+                        <div class="${m.monthly_trend === 'bullish' ? 'trend-up' : 'trend-down'} flex justify-between items-center py-2 px-3 rounded-lg">
+                            <span class="text-xs font-semibold text-gray-400">Monthly Trend</span>
+                            <span class="${m.monthly_trend === 'bullish' ? 'text-green-400' : 'text-red-400'} font-bold text-sm">${m.monthly_trend === 'bullish' ? '▲ BULL' : '▼ BEAR'}</span>
+                        </div>
+                        <div class="${m.monthly_macd === 'bullish' ? 'trend-up' : 'trend-down'} flex justify-between items-center py-2 px-3 rounded-lg">
+                            <span class="text-xs font-semibold text-gray-400">Monthly MACD</span>
+                            <span class="${m.monthly_macd === 'bullish' ? 'text-green-400' : 'text-red-400'} font-bold text-sm">${m.monthly_macd === 'bullish' ? '▲ BULL' : '▼ BEAR'}</span>
+                        </div>
+                    </div>
+                    <div class="mt-4 pt-3 border-t border-gray-800/40 flex justify-between items-center text-xs">
+                        <span class="text-gray-500">Updated</span>
+                        <span class="text-gray-400">${formatTime(m.last_updated_minutes_ago)}</span>
+                    </div>
                 </div>
-            `;
+            `).join('');
         }
+
+        // Update verdict
+        function updateVerdict() {
+            let bull = 0, bear = 0;
+            macrosData.forEach(m => {
+                if (m.monthly_trend === 'bullish') bull++; else bear++;
+                if (m.monthly_macd === 'bullish') bull++; else bear++;
+            });
+            
+            const total = bull + bear;
+            const isBull = bull > bear;
+            const conf = total > 0 ? Math.round((Math.max(bull, bear) / total) * 100) : 0;
+            
+            document.getElementById('verdict-card').className = `glass rounded-xl p-5 border ${isBull ? 'verdict-bullish' : 'verdict-bearish'}`;
+            document.getElementById('verdict-icon').className = `w-12 h-12 rounded-lg flex items-center justify-center text-2xl font-bold ${isBull ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'}`;
+            document.getElementById('verdict-icon').textContent = isBull ? '↗' : '↘';
+            document.getElementById('verdict-text').className = `text-xl font-bold ${isBull ? 'text-green-400' : 'text-red-400'}`;
+            document.getElementById('verdict-text').textContent = isBull ? 'BULLISH' : 'BEARISH';
+            document.getElementById('bullish-count').textContent = `${bull}/${total}`;
+            document.getElementById('bearish-count').textContent = `${bear}/${total}`;
+            document.getElementById('confidence').textContent = `${conf}%`;
+        }
+
+        function formatTime(min) {
+            if (min === null || min === undefined) return '—';
+            if (min < 1) return 'Just now';
+            if (min < 60) return `${min}m ago`;
+            const h = Math.floor(min / 60);
+            if (h < 24) return `${h}h ago`;
+            return `${Math.floor(h / 24)}d ago`;
+        }
+
+        // Init
+        fetchData();
+        setInterval(() => {
+            countdown--;
+            if (countdown <= 0) fetchData();
+            else document.getElementById('countdown').textContent = `${countdown}s`;
+        }, 1000);
         
-        function formatTime(m) {
-            if (m === null) return '--';
-            if (m < 1) return 'NOW';
-            if (m < 60) return `${m}M`;
-            const h = Math.floor(m/60);
-            if (h < 24) return `${h}H`;
-            return `${Math.floor(h/24)}D`;
-        }
-
-        function setSort(field, dir, el) {
-            store.sort = { field, dir };
-            document.querySelectorAll('.filter-item').forEach(b => b.classList.remove('active'));
-            el.classList.add('active');
-            render();
-        }
-
-        // Boot
-        init();
-
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'visible') fetchData();
+        });
     </script>
 </body>
 </html>
