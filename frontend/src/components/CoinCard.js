@@ -1,21 +1,5 @@
 import React from 'react';
 
-// Vision UI inspired gradients for each coin
-const COIN_STYLES = {
-    'HYPE': { gradient: 'linear-gradient(310deg, #7928ca, #ff0080)', glow: 'rgba(121, 40, 202, 0.4)' },
-    'VIRTUAL': { gradient: 'linear-gradient(310deg, #0075ff, #21d4fd)', glow: 'rgba(33, 212, 253, 0.4)' },
-    'FARTCOIN': { gradient: 'linear-gradient(310deg, #f5365c, #f56036)', glow: 'rgba(245, 54, 92, 0.4)' },
-    'PEPE': { gradient: 'linear-gradient(310deg, #01b574, #0ff0b3)', glow: 'rgba(1, 181, 116, 0.4)' },
-    'DOGE': { gradient: 'linear-gradient(310deg, #fbcf33, #f53939)', glow: 'rgba(251, 207, 51, 0.4)' },
-};
-
-function getStyle(name) {
-    return COIN_STYLES[name] || {
-        gradient: 'linear-gradient(310deg, #0075ff, #21d4fd)',
-        glow: 'rgba(33, 212, 253, 0.4)'
-    };
-}
-
 function calculateScore(trends) {
     let score = 0;
     if (trends['1w'] === 'uptrend') score += 6;
@@ -28,24 +12,23 @@ function calculateScore(trends) {
 }
 
 function formatTime(minutes) {
-    if (minutes === null || minutes === undefined) return 'Never';
-    if (minutes < 1) return 'Just now';
-    if (minutes < 60) return `${minutes}m ago`;
+    if (minutes === null || minutes === undefined) return '—';
+    if (minutes < 1) return 'NOW';
+    if (minutes < 60) return `${minutes}m`;
     const hours = Math.floor(minutes / 60);
-    if (hours < 24) return `${hours}h ago`;
+    if (hours < 24) return `${hours}h`;
     const days = Math.floor(hours / 24);
-    return `${days}d ago`;
+    return `${days}d`;
 }
 
 function CoinCard({ coin, delay }) {
-    const style = getStyle(coin.display_name);
     const score = calculateScore(coin.trends);
     const isRecent = coin.last_updated_minutes_ago !== null && coin.last_updated_minutes_ago < 1;
 
     const renderTrend = (timeframe, trend) => {
         if (!trend) {
             return (
-                <div className="trend-badge neutral">
+                <div className="trend-badge">
                     <span className="trend-timeframe">{timeframe}</span>
                     <span className="trend-value neutral">—</span>
                 </div>
@@ -54,11 +37,11 @@ function CoinCard({ coin, delay }) {
 
         const isUp = trend === 'uptrend';
         return (
-            <div className={`trend-badge ${isUp ? 'uptrend' : 'downtrend'}`}>
+            <div className="trend-badge">
                 <span className="trend-timeframe">{timeframe}</span>
                 <span className={`trend-value ${isUp ? 'up' : 'down'}`}>
                     <span className="trend-icon">{isUp ? '▲' : '▼'}</span>
-                    {isUp ? 'UPTREND' : 'DOWNTREND'}
+                    {isUp ? 'UP' : 'DOWN'}
                 </span>
             </div>
         );
@@ -70,10 +53,8 @@ function CoinCard({ coin, delay }) {
             return (
                 <div className="signal-container awaiting">
                     <div className="signal-content">
-                        <span className="signal-emoji">⏳</span>
-                        <div>
-                            <span className="signal-text awaiting">Awaiting Signal</span>
-                        </div>
+                        <span className="signal-emoji">○</span>
+                        <span className="signal-text awaiting">AWAITING</span>
                     </div>
                 </div>
             );
@@ -83,16 +64,13 @@ function CoinCard({ coin, delay }) {
         return (
             <div className={`signal-container ${isBuy ? 'buy' : 'sell'}`}>
                 <div className="signal-content">
-                    <span className="signal-emoji">{isBuy ? '🚀' : '🔻'}</span>
+                    <span className="signal-emoji">{isBuy ? '◉' : '◉'}</span>
                     <div>
                         <span className={`signal-text ${isBuy ? 'buy' : 'sell'}`}>
-                            {isBuy ? 'BUY SIGNAL' : 'SELL SIGNAL'}
+                            {isBuy ? 'BUY' : 'SELL'}
                         </span>
                         <div className="signal-time">
-                            <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
-                            {formatTime(signal.minutes_ago)}
+                            {formatTime(signal.minutes_ago)} ago
                         </div>
                     </div>
                 </div>
@@ -107,13 +85,7 @@ function CoinCard({ coin, delay }) {
         >
             <div className="card-header">
                 <div className="coin-info">
-                    <div
-                        className="coin-icon"
-                        style={{
-                            background: style.gradient,
-                            boxShadow: `0 0 20px ${style.glow}`
-                        }}
-                    >
+                    <div className="coin-icon">
                         {coin.display_name.substring(0, 2)}
                     </div>
                     <div>
@@ -135,12 +107,7 @@ function CoinCard({ coin, delay }) {
             {renderSignal()}
 
             <div className="card-footer">
-                <div className="update-info">
-                    <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    Updated
-                </div>
+                <div className="update-info">UPDATED</div>
                 <span className={`update-time ${isRecent ? 'recent' : ''}`}>
                     {formatTime(coin.last_updated_minutes_ago)}
                 </span>
