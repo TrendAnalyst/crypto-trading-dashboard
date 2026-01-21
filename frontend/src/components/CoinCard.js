@@ -1,18 +1,18 @@
 import React from 'react';
 
-const COIN_COLORS = {
-    'HYPE': { gradient: 'linear-gradient(135deg, rgba(167, 139, 250, 0.2), rgba(139, 92, 246, 0.1))', border: 'rgba(167, 139, 250, 0.3)', color: '#a78bfa' },
-    'VIRTUAL': { gradient: 'linear-gradient(135deg, rgba(34, 211, 238, 0.2), rgba(59, 130, 246, 0.1))', border: 'rgba(34, 211, 238, 0.3)', color: '#22d3ee' },
-    'FARTCOIN': { gradient: 'linear-gradient(135deg, rgba(251, 191, 36, 0.2), rgba(249, 115, 22, 0.1))', border: 'rgba(251, 191, 36, 0.3)', color: '#fbbf24' },
-    'PEPE': { gradient: 'linear-gradient(135deg, rgba(52, 211, 153, 0.2), rgba(34, 197, 94, 0.1))', border: 'rgba(52, 211, 153, 0.3)', color: '#34d399' },
-    'DOGE': { gradient: 'linear-gradient(135deg, rgba(250, 204, 21, 0.2), rgba(251, 191, 36, 0.1))', border: 'rgba(250, 204, 21, 0.3)', color: '#facc15' },
+// Vision UI inspired gradients for each coin
+const COIN_STYLES = {
+    'HYPE': { gradient: 'linear-gradient(310deg, #7928ca, #ff0080)', glow: 'rgba(121, 40, 202, 0.4)' },
+    'VIRTUAL': { gradient: 'linear-gradient(310deg, #0075ff, #21d4fd)', glow: 'rgba(33, 212, 253, 0.4)' },
+    'FARTCOIN': { gradient: 'linear-gradient(310deg, #f5365c, #f56036)', glow: 'rgba(245, 54, 92, 0.4)' },
+    'PEPE': { gradient: 'linear-gradient(310deg, #01b574, #0ff0b3)', glow: 'rgba(1, 181, 116, 0.4)' },
+    'DOGE': { gradient: 'linear-gradient(310deg, #fbcf33, #f53939)', glow: 'rgba(251, 207, 51, 0.4)' },
 };
 
 function getStyle(name) {
-    return COIN_COLORS[name] || {
-        gradient: 'linear-gradient(135deg, rgba(124, 58, 237, 0.2), rgba(79, 70, 229, 0.1))',
-        border: 'rgba(124, 58, 237, 0.3)',
-        color: '#a78bfa'
+    return COIN_STYLES[name] || {
+        gradient: 'linear-gradient(310deg, #0075ff, #21d4fd)',
+        glow: 'rgba(33, 212, 253, 0.4)'
     };
 }
 
@@ -58,7 +58,7 @@ function CoinCard({ coin, delay }) {
                 <span className="trend-timeframe">{timeframe}</span>
                 <span className={`trend-value ${isUp ? 'up' : 'down'}`}>
                     <span className="trend-icon">{isUp ? '▲' : '▼'}</span>
-                    {isUp ? 'UP' : 'DOWN'}
+                    {isUp ? 'UPTREND' : 'DOWNTREND'}
                 </span>
             </div>
         );
@@ -70,7 +70,10 @@ function CoinCard({ coin, delay }) {
             return (
                 <div className="signal-container awaiting">
                     <div className="signal-content">
-                        <span className="signal-text awaiting">Awaiting signal...</span>
+                        <span className="signal-emoji">⏳</span>
+                        <div>
+                            <span className="signal-text awaiting">Awaiting Signal</span>
+                        </div>
                     </div>
                 </div>
             );
@@ -80,10 +83,10 @@ function CoinCard({ coin, delay }) {
         return (
             <div className={`signal-container ${isBuy ? 'buy' : 'sell'}`}>
                 <div className="signal-content">
-                    <span className="signal-emoji">{isBuy ? '💎' : '🔻'}</span>
+                    <span className="signal-emoji">{isBuy ? '🚀' : '🔻'}</span>
                     <div>
                         <span className={`signal-text ${isBuy ? 'buy' : 'sell'}`}>
-                            {isBuy ? 'BUY' : 'SELL'} SIGNAL
+                            {isBuy ? 'BUY SIGNAL' : 'SELL SIGNAL'}
                         </span>
                         <div className="signal-time">
                             <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -108,8 +111,7 @@ function CoinCard({ coin, delay }) {
                         className="coin-icon"
                         style={{
                             background: style.gradient,
-                            borderColor: style.border,
-                            color: style.color
+                            boxShadow: `0 0 20px ${style.glow}`
                         }}
                     >
                         {coin.display_name.substring(0, 2)}
