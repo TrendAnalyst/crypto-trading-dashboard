@@ -1,5 +1,10 @@
 """
 API Routes für das Trading Dashboard
+Endpoints:
+    POST /webhook      - TradingView Webhook empfangen
+    GET  /api/coins    - Alle Coins mit Status abrufen
+    GET  /api/macro    - Alle Macro-Indikatoren abrufen
+    GET  /health       - Health Check
 """
 
 from fastapi import APIRouter, Depends, HTTPException, Request
@@ -8,7 +13,7 @@ from datetime import datetime
 from typing import Optional
 import logging
 
-from .database import get_db, CoinState
+from .database import get_db, CoinState, MacroState
 from .webhook_parser import parse_webhook
 
 logger = logging.getLogger(__name__)
@@ -17,123 +22,140 @@ router = APIRouter()
 
 @router.post("/webhook")
 async def receive_webhook(request: Request, db: Session = Depends(get_db)):
-    """Empfängt TradingView Webhook-Nachrichten."""
+    """
+    Empfängt TradingView Webhook-Nachrichten.
     
+    Unterstützte Formate:
+        - Trends:  "HYPEUSDT.P, 1W - DOWNTREND"
+        - Signale: "HYPEUSDT.P, 1D - Buy Signal"
+        - Macro:   "BTC MACRO - 1M - BEARISH"
+        - Macro MACD: "BTC MACRO MACD - 1M - BULLISH"
+    
+    Returns:
+        JSON mit Status und Nachricht
+    """
+    
+    # Lese Raw Body (TradingView sendet text/plain)
     body = await request.body()
     message = body.decode("utf-8")
     
     logger.info(f"📩 Webhook empfangen: {message}")
     
+    # Parse Nachricht
     parsed = parse_webhook(message)
     
     if not parsed:
         logger.warning(f"❌ Ungültiges Format: {message}")
-        raise HTTPException(status_code=400, detail=f"Invalid webhook format: {message}")
-    
-    coin = db.query(CoinState).filter_by(symbol=parsed["symbol"]).first()
-    
-    if not coin:
-        display_name = parsed["symbol"].replace("USDT.P", "").replace("USDT", "")
-        coin = CoinState(symbol=parsed["symbol"], display_name=display_name, created_at=datetime.utcnow())
-        db.add(coin)
-        logger.info(f"➕ Neuer Coin erstellt: {display_name}")
+        raise HTTPException(
+            status_code=400, 
+            detail=f"Invalid webhook format: {message}"
+        )
     
     update_msg = ""
     
-    if parsed["type"] == "trend":
-        timeframe = parsed["timeframe"]
-        if timeframe in ["1w", "7d"]:
-            coin.trend_1w = parsed["value"]
-            update_msg = f"trend_1w = {parsed['value']}"
-        elif timeframe in ["3d"]:
-            coin.trend_3d = parsed["value"]
-            update_msg = f"trend_3d = {parsed['value']}"
-        elif timeframe in ["1d", "24h"]:
-            coin.trend_1d = parsed["value"]
-            update_msg = f"trend_1d = {parsed['value']}"
-        else:
-            coin.trend_1d = parsed["value"]
-            update_msg = f"trend_1d = {parsed['value']} (from {timeframe})"
-            
-    elif parsed["type"] == "signal":
-        coin.last_signal_type = parsed["value"]
-        coin.last_signal_time = datetime.utcnow()
-        update_msg = f"signal = {parsed['value']}"
+    # Handle Macro messages
+    if parsed["type"] in ["macro_trend", "macro_macd"]:
+        macro = db.query(MacroState).filter_by(symbol=parsed["symbol"]).first()
+        
+        if not macro:
+            # Auto-create for new macro symbols
+            macro = MacroState(
+                symbol=parsed["symbol"],
+                display_name=parsed["symbol"],
+                monthly_trend="bearish",
+                monthly_macd="bearish",
+                created_at=datetime.utcnow()
+            )
+            db.add(macro)
+            logger.info(f"➕ Neuer Macro erstellt: {parsed['symbol']}")
+        
+        if parsed["type"] == "macro_trend":
+            macro.monthly_trend = parsed["value"]
+            update_msg = f"monthly_trend = {parsed['value']}"
+        else:  # macro_macd
+            macro.monthly_macd = parsed["value"]
+            update_msg = f"monthly_macd = {parsed['value']}"
+        
+        macro.last_updated = datetime.utcnow()
     
-    coin.last_updated = datetime.utcnow()
+    else:
+        # Handle Coin messages (original logic)
+        coin = db.query(CoinState).filter_by(symbol=parsed["symbol"]).first()
+        
+        if not coin:
+            # Auto-Create für neue Coins
+            display_name = parsed["symbol"].replace("USDT.P", "").replace("USDT", "")
+            coin = CoinState(
+                symbol=parsed["symbol"],
+                display_name=display_name,
+                created_at=datetime.utcnow()
+            )
+            db.add(coin)
+            logger.info(f"➕ Neuer Coin erstellt: {display_name}")
+        
+        # Update basierend auf Typ
+        if parsed["type"] == "trend":
+            # Trend Update (1w, 3d, 1d, etc.)
+            timeframe = parsed["timeframe"]
+            
+            # Mapping von Timeframe zu Spalte
+            if timeframe in ["1w", "7d"]:
+                coin.trend_1w = parsed["value"]
+                update_msg = f"trend_1w = {parsed['value']}"
+            elif timeframe in ["3d"]:
+                coin.trend_3d = parsed["value"]
+                update_msg = f"trend_3d = {parsed['value']}"
+            elif timeframe in ["1d", "24h"]:
+                coin.trend_1d = parsed["value"]
+                update_msg = f"trend_1d = {parsed['value']}"
+            else:
+                # Für andere Timeframes: Speichere in 1d als Default
+                coin.trend_1d = parsed["value"]
+                update_msg = f"trend_1d = {parsed['value']} (from {timeframe})"
+                
+        elif parsed["type"] == "signal":
+            # Signal Update (Buy/Sell)
+            coin.last_signal_type = parsed["value"]
+            coin.last_signal_time = datetime.utcnow()
+            update_msg = f"signal = {parsed['value']}"
+        
+        coin.last_updated = datetime.utcnow()
     
     try:
         db.commit()
         logger.info(f"✅ {parsed['symbol']} updated: {update_msg}")
-        return {"status": "success", "message": f"{parsed['symbol']} updated: {update_msg}"}
+        
+        return {
+            "status": "success",
+            "message": f"{parsed['symbol']} updated: {update_msg}",
+            "data": {
+                "symbol": parsed["symbol"],
+                "type": parsed["type"],
+                "value": parsed["value"],
+                "timeframe": parsed["timeframe"]
+            }
+        }
+        
     except Exception as e:
         db.rollback()
         logger.error(f"❌ Database error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.post("/api/coins/{symbol}/signal")
-async def set_signal(symbol: str, request: Request, db: Session = Depends(get_db)):
-    """
-    Setzt ein Signal mit benutzerdefiniertem Datum.
-    Body: {"type": "buy" oder "sell", "date": "YYYY-MM-DD"}
-    """
-    try:
-        data = await request.json()
-    except:
-        raise HTTPException(status_code=400, detail="Invalid JSON body")
-    
-    coin = db.query(CoinState).filter_by(symbol=symbol).first()
-    if not coin:
-        raise HTTPException(status_code=404, detail=f"Coin {symbol} not found")
-    
-    signal_type = data.get("type", "").lower()
-    if signal_type not in ["buy", "sell"]:
-        raise HTTPException(status_code=400, detail="type must be 'buy' or 'sell'")
-    
-    date_str = data.get("date")
-    if date_str:
-        try:
-            signal_time = datetime.strptime(date_str, "%Y-%m-%d")
-        except ValueError:
-            raise HTTPException(status_code=400, detail="date must be YYYY-MM-DD format")
-    else:
-        signal_time = datetime.utcnow()
-    
-    coin.last_signal_type = signal_type
-    coin.last_signal_time = signal_time
-    coin.last_updated = datetime.utcnow()
-    
-    db.commit()
-    
-    logger.info(f"✅ {symbol} signal set: {signal_type} on {date_str}")
-    return {"status": "success", "message": f"{symbol} signal set to {signal_type} on {date_str}"}
-
-
-@router.delete("/api/coins/{symbol}")
-def delete_coin(symbol: str, db: Session = Depends(get_db)):
-    """Löscht einen Coin aus der Datenbank."""
-    
-    coin = db.query(CoinState).filter_by(symbol=symbol).first()
-    
-    if not coin:
-        raise HTTPException(status_code=404, detail=f"Coin {symbol} not found")
-    
-    db.delete(coin)
-    db.commit()
-    
-    logger.info(f"🗑️ Coin gelöscht: {symbol}")
-    return {"status": "success", "message": f"{symbol} deleted"}
-
-
 @router.get("/api/coins")
 def get_coins(db: Session = Depends(get_db)):
-    """Liefert alle Coins mit aktuellem Status."""
+    """
+    Liefert alle Coins mit aktuellem Status.
+    
+    Returns:
+        JSON mit Liste aller Coins und Metadaten
+    """
     
     coins = db.query(CoinState).order_by(CoinState.display_name).all()
     now = datetime.utcnow()
     
     def minutes_ago(dt: Optional[datetime]) -> Optional[int]:
+        """Berechnet Minuten seit einem Timestamp"""
         if not dt:
             return None
         delta = now - dt
@@ -144,7 +166,11 @@ def get_coins(db: Session = Depends(get_db)):
         result.append({
             "symbol": coin.symbol,
             "display_name": coin.display_name,
-            "trends": {"1w": coin.trend_1w, "3d": coin.trend_3d, "1d": coin.trend_1d},
+            "trends": {
+                "1w": coin.trend_1w,
+                "3d": coin.trend_3d,
+                "1d": coin.trend_1d
+            },
             "last_signal": {
                 "type": coin.last_signal_type,
                 "price": coin.last_signal_price,
@@ -155,19 +181,90 @@ def get_coins(db: Session = Depends(get_db)):
             "last_updated_minutes_ago": minutes_ago(coin.last_updated)
         })
     
-    return {"coins": result, "total_coins": len(result), "timestamp": now.isoformat() + "Z"}
+    return {
+        "coins": result, 
+        "total_coins": len(result),
+        "timestamp": now.isoformat() + "Z"
+    }
+
+
+@router.get("/api/macro")
+def get_macro(db: Session = Depends(get_db)):
+    """
+    Liefert alle Macro-Indikatoren.
+    
+    Returns:
+        JSON mit Liste aller Macro-Indikatoren
+    """
+    
+    # Define order for display
+    order = ["BTC", "USDT.D", "TOTAL", "TOTAL2", "TOTAL3", "OTHERS"]
+    
+    macros = db.query(MacroState).all()
+    now = datetime.utcnow()
+    
+    def minutes_ago(dt: Optional[datetime]) -> Optional[int]:
+        if not dt:
+            return None
+        delta = now - dt
+        return max(0, int(delta.total_seconds() / 60))
+    
+    # Create result dict for ordering
+    result_dict = {}
+    for macro in macros:
+        result_dict[macro.symbol] = {
+            "symbol": macro.symbol,
+            "display_name": macro.display_name,
+            "monthly_trend": macro.monthly_trend,
+            "monthly_macd": macro.monthly_macd,
+            "last_updated": macro.last_updated.isoformat() + "Z" if macro.last_updated else None,
+            "last_updated_minutes_ago": minutes_ago(macro.last_updated)
+        }
+    
+    # Return in defined order, with any extras at end
+    result = []
+    for symbol in order:
+        if symbol in result_dict:
+            result.append(result_dict[symbol])
+    
+    # Add any symbols not in the predefined order
+    for symbol, data in result_dict.items():
+        if symbol not in order:
+            result.append(data)
+    
+    return {
+        "macros": result,
+        "total_macros": len(result),
+        "timestamp": now.isoformat() + "Z"
+    }
 
 
 @router.get("/health")
 def health_check(db: Session = Depends(get_db)):
-    """Health Check Endpoint für Monitoring."""
+    """
+    Health Check Endpoint für Monitoring.
+    
+    Returns:
+        JSON mit Status, DB-Verbindung und Coin-Anzahl
+    """
     
     try:
-        count = db.query(CoinState).count()
+        coin_count = db.query(CoinState).count()
+        macro_count = db.query(MacroState).count()
+        
+        # Finde letztes Update
         latest = db.query(CoinState).order_by(CoinState.last_updated.desc()).first()
         last_webhook = latest.last_updated.isoformat() + "Z" if latest and latest.last_updated else None
         
-        return {"status": "healthy", "database": "connected", "coins_tracked": count, "last_webhook": last_webhook, "version": "1.0.0"}
+        return {
+            "status": "healthy",
+            "database": "connected",
+            "coins_tracked": coin_count,
+            "macros_tracked": macro_count,
+            "last_webhook": last_webhook,
+            "version": "2.0.0"
+        }
+        
     except Exception as e:
         logger.error(f"❌ Health check failed: {e}")
         raise HTTPException(status_code=500, detail=str(e))
