@@ -1,19 +1,43 @@
 import React from 'react';
 
-const MACRO_COLORS = {
-    'BTC': { gradient: 'linear-gradient(135deg, rgba(251, 146, 60, 0.2), rgba(249, 115, 22, 0.1))', border: 'rgba(251, 146, 60, 0.3)', color: '#fb923c', icon: '₿' },
-    'USDT.D': { gradient: 'linear-gradient(135deg, rgba(34, 197, 94, 0.2), rgba(22, 163, 74, 0.1))', border: 'rgba(34, 197, 94, 0.3)', color: '#22c55e', icon: '$' },
-    'TOTAL': { gradient: 'linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(37, 99, 235, 0.1))', border: 'rgba(59, 130, 246, 0.3)', color: '#3b82f6', icon: 'Σ' },
-    'TOTAL2': { gradient: 'linear-gradient(135deg, rgba(139, 92, 246, 0.2), rgba(124, 58, 237, 0.1))', border: 'rgba(139, 92, 246, 0.3)', color: '#8b5cf6', icon: 'Σ²' },
-    'TOTAL3': { gradient: 'linear-gradient(135deg, rgba(236, 72, 153, 0.2), rgba(219, 39, 119, 0.1))', border: 'rgba(236, 72, 153, 0.3)', color: '#ec4899', icon: 'Σ³' },
-    'OTHERS': { gradient: 'linear-gradient(135deg, rgba(34, 211, 238, 0.2), rgba(6, 182, 212, 0.1))', border: 'rgba(34, 211, 238, 0.3)', color: '#22d3ee', icon: '◎' },
+// Vision UI inspired gradients for macro indicators
+const MACRO_STYLES = {
+    'BTC': { 
+        gradient: 'linear-gradient(310deg, #f5365c, #f56036)', 
+        glow: 'rgba(245, 54, 92, 0.4)',
+        icon: '₿'
+    },
+    'USDT.D': { 
+        gradient: 'linear-gradient(310deg, #01b574, #0ff0b3)', 
+        glow: 'rgba(1, 181, 116, 0.4)',
+        icon: '$'
+    },
+    'TOTAL': { 
+        gradient: 'linear-gradient(310deg, #0075ff, #21d4fd)', 
+        glow: 'rgba(33, 212, 253, 0.4)',
+        icon: 'Σ'
+    },
+    'TOTAL2': { 
+        gradient: 'linear-gradient(310deg, #7928ca, #ff0080)', 
+        glow: 'rgba(121, 40, 202, 0.4)',
+        icon: 'Σ²'
+    },
+    'TOTAL3': { 
+        gradient: 'linear-gradient(310deg, #ec4899, #f472b6)', 
+        glow: 'rgba(236, 72, 153, 0.4)',
+        icon: 'Σ³'
+    },
+    'OTHERS': { 
+        gradient: 'linear-gradient(310deg, #06b6d4, #22d3ee)', 
+        glow: 'rgba(6, 182, 212, 0.4)',
+        icon: '◎'
+    },
 };
 
 function getStyle(symbol) {
-    return MACRO_COLORS[symbol] || {
-        gradient: 'linear-gradient(135deg, rgba(124, 58, 237, 0.2), rgba(79, 70, 229, 0.1))',
-        border: 'rgba(124, 58, 237, 0.3)',
-        color: '#a78bfa',
+    return MACRO_STYLES[symbol] || {
+        gradient: 'linear-gradient(310deg, #7928ca, #ff0080)',
+        glow: 'rgba(121, 40, 202, 0.4)',
         icon: '●'
     };
 }
@@ -41,8 +65,7 @@ function MacroCard({ macro, delay }) {
                     className="macro-icon"
                     style={{
                         background: style.gradient,
-                        borderColor: style.border,
-                        color: style.color
+                        boxShadow: `0 0 25px ${style.glow}`
                     }}
                 >
                     {style.icon}
