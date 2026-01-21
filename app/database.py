@@ -4,7 +4,7 @@ Persistent Volume: /data/trading.db (Railway)
 Lokal: data/trading.db
 """
 
-from sqlalchemy import create_engine, Column, String, Float, DateTime
+from sqlalchemy import create_engine, Column, String, Float, DateTime, text, inspect
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from datetime import datetime, timedelta
@@ -71,11 +71,37 @@ class MacroState(Base):
         return f"<MacroState {self.symbol}>"
 
 
+def migrate_macro_table():
+    """
+    Migrate macro_states table if it exists with old schema.
+    Drops and recreates the table with new columns.
+    """
+    inspector = inspect(engine)
+    
+    if 'macro_states' in inspector.get_table_names():
+        # Check if new columns exist
+        columns = [col['name'] for col in inspector.get_columns('macro_states')]
+        
+        if 'trend_1m' not in columns or 'macd_1m' not in columns:
+            logger.info("📊 Migrating macro_states table to new schema...")
+            
+            # Drop old table and recreate
+            with engine.connect() as conn:
+                conn.execute(text("DROP TABLE IF EXISTS macro_states"))
+                conn.commit()
+            
+            logger.info("✅ Old macro_states table dropped")
+
+
 def init_db():
     """
     Initialisiert die Datenbank und fügt Seed-Daten hinzu.
     Wird beim App-Start aufgerufen.
     """
+    # Migrate old tables if needed
+    migrate_macro_table()
+    
+    # Create all tables
     Base.metadata.create_all(bind=engine)
     
     db = SessionLocal()
