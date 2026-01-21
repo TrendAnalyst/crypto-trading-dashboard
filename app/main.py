@@ -39,16 +39,23 @@ app = FastAPI(
     lifespan=lifespan
 )
 
-# Static Files - Serve React build assets
+# Static Files Directory - React build output
+# In Docker: /app/static (copied from frontend build)
 static_dir = os.path.join(os.path.dirname(__file__), "..", "static")
-if os.path.exists(static_dir):
-    # Serve static assets (JS, CSS, etc.)
-    app.mount("/static", StaticFiles(directory=static_dir), name="static")
 
 
-# Import und registriere API Routes
+# Import und registriere API Routes FIRST (before catch-all)
 from .api import router
 app.include_router(router)
+
+
+# Mount static files for React assets (JS, CSS, media)
+# React build creates: build/static/js/, build/static/css/, etc.
+if os.path.exists(static_dir):
+    static_assets = os.path.join(static_dir, "static")
+    if os.path.exists(static_assets):
+        app.mount("/static", StaticFiles(directory=static_assets), name="static_assets")
+        logger.info(f"✅ Static assets mounted from {static_assets}")
 
 
 @app.get("/")
@@ -63,13 +70,12 @@ async def root():
 @app.get("/{full_path:path}")
 async def catch_all(full_path: str):
     """
-    Catch-all route for React Router support.
-    Returns index.html for client-side routing.
+    Catch-all route for React Router and static files.
     """
-    # Check if it's a static file request
-    static_path = os.path.join(static_dir, full_path)
-    if os.path.exists(static_path) and os.path.isfile(static_path):
-        return FileResponse(static_path)
+    # First check if the file exists in the static directory root
+    file_path = os.path.join(static_dir, full_path)
+    if os.path.exists(file_path) and os.path.isfile(file_path):
+        return FileResponse(file_path)
     
     # Otherwise return index.html for React Router
     index_path = os.path.join(static_dir, "index.html")
